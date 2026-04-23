@@ -1,0 +1,108 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /c/repos/WebMultimediaServer/Backend)",
+      "Bash(dotnet new *)",
+      "Bash(dotnet sln add *)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet ef migrations *)",
+      "Bash(dotnet test *)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Skill(update-config)",
+      "Bash(where engram *)",
+      "Bash(engram mcp *)",
+      "Bash(engram *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(kill %1)",
+      "Bash(claude plugin *)",
+      "Bash(\"C:/Users/Jose Antonio Flor/go/bin/engram.exe\" mcp --tools=agent)",
+      "Bash(\"C:/Users/Jose Antonio Flor/go/bin/engram.exe\" --version)",
+      "Bash(\"C:/Users/Jose Antonio Flor/go/bin/engram.exe\" --help)",
+      "Bash(\"C:/Users/Jose Antonio Flor/go/bin/engram.exe\" context)",
+      "Bash(C:/Users/Jose Antonio Flor/go/bin/engram.exe stats *)",
+      "Bash(\"C:/Users/Jose Antonio Flor/go/bin/engram.exe\" mcp)",
+      "Bash(claude *)",
+      "Bash(C:/Users/Jose Antonio Flor/go/bin/engram.exe setup *)",
+      "Bash(cmd *)",
+      "Bash(powershell *)",
+      "Bash(xargs grep *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "engram intercept",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "engram intercept",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "engram intercept",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "engram intercept",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "engram intercept",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "engram intercept",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "engram hud-label"
+  }
+}

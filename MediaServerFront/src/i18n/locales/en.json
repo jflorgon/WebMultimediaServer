@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Home",
+    "movies": "Movies",
+    "series": "Series",
+    "documentaries": "Documentaries"
+  },
+  "home": {
+    "recentMovies": "Recent Movies",
+    "recentSeries": "Recent Series",
+    "recentDocumentaries": "Recent Documentaries",
+    "viewAll": "View all"
+  },
+  "detail": {
+    "overview": "Overview",
+    "genres": "Genres",
+    "rating": "Rating",
+    "runtime": "Runtime",
+    "year": "Year",
+    "seasons": "Seasons",
+    "episodes": "Episodes",
+    "noOverview": "No overview available."
+  },
+  "search": {
+    "placeholder": "Search...",
+    "noResults": "No results found",
+    "filters": "Filters",
+    "genre": "Genre",
+    "year": "Year",
+    "clearFilters": "Clear filters"
+  },
+  "scanner": {
+    "trigger": "Scan now",
+    "status": "Scanner status",
+    "running": "Scanning...",
+    "lastRun": "Last scan",
+    "items": "items processed",
+    "notRun": "No previous scans"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "of": "of"
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "loading": "Error loading content"
+  }
+}
