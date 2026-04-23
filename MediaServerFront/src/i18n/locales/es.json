@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "movies": "Películas",
+    "series": "Series",
+    "documentaries": "Documentales"
+  },
+  "home": {
+    "recentMovies": "Películas recientes",
+    "recentSeries": "Series recientes",
+    "recentDocumentaries": "Documentales recientes",
+    "viewAll": "Ver todo"
+  },
+  "detail": {
+    "overview": "Sinopsis",
+    "genres": "Géneros",
+    "rating": "Puntuación",
+    "runtime": "Duración",
+    "year": "Año",
+    "seasons": "Temporadas",
+    "episodes": "Episodios",
+    "noOverview": "Sin sinopsis disponible."
+  },
+  "search": {
+    "placeholder": "Buscar...",
+    "noResults": "Sin resultados",
+    "filters": "Filtros",
+    "genre": "Género",
+    "year": "Año",
+    "clearFilters": "Limpiar filtros"
+  },
+  "scanner": {
+    "trigger": "Escanear ahora",
+    "status": "Estado del escáner",
+    "running": "Escaneando...",
+    "lastRun": "Último escaneo",
+    "items": "elementos procesados",
+    "notRun": "Sin ejecuciones previas"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "of": "de"
+  },
+  "errors": {
+    "notFound": "Página no encontrada",
+    "loading": "Error al cargar el contenido"
+  }
+}

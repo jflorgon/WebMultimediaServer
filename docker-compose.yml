@@ -1,0 +1,82 @@
+networks:
+  mediaserver-net:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+  media-data:
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: ${SA_PASSWORD}
+      ACCEPT_EULA: "Y"
+      MSSQL_COLLATION: Latin1_General_100_CI_AS_SC_UTF8
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - mediaserver-net
+    healthcheck:
+      test:
+        - CMD
+        - /opt/mssql-tools18/bin/sqlcmd
+        - -S
+        - localhost
+        - -U
+        - sa
+        - -P
+        - ${SA_PASSWORD}
+        - -Q
+        - SELECT 1
+        - -No
+        - -C
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  mediaserver-api:
+    build:
+      context: ./Backend
+      dockerfile: API/Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver;Database=MediaServerDb;
+        User Id=sa;Password=${SA_PASSWORD};
+        TrustServerCertificate=True
+      Scanner__MediaPaths__0: /media/movies
+      Scanner__MediaPaths__1: /media/series
+      Scanner__MediaPaths__2: /media/documentaries
+      Scanner__IntervalMinutes: "60"
+      Tmdb__ApiKey: ${TMDB_API_KEY:-}
+    volumes:
+      - media-data:/media
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - mediaserver-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  mediaserver-front:
+    build:
+      context: ./MediaServerFront
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      mediaserver-api:
+        condition: service_healthy
+    networks:
+      - mediaserver-net
