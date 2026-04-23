@@ -226,16 +226,19 @@ Este proyecto usa **Engram** como memoria estructurada entre sesiones. Funciona 
 engram query "<área o concepto de la tarea>"
 ```
 
-**Durante el trabajo**, ejecutar `engram learn` al:
+**Durante el trabajo**, ejecutar `engram learn` **regularmente** al:
 - Corregir un bug relevante
 - Tomar una decisión de arquitectura
 - Descubrir un patrón o convención no obvio
+- Completar un hito importante
 
 ```bash
 engram learn "Elegimos UpsertXxx en lugar de CreateXxx en el scanner para garantizar idempotencia"
 ```
 
-**Al cerrar sesión:**
+**IMPORTANTE:** No esperar al final de la sesión — **guardar en engram mientras se avanza**, no solo al cerrar.
+
+**Al cerrar sesión (OBLIGATORIO):**
 ```bash
 engram learn "Sesión YYYY-MM-DD: <resumen de lo completado y decisiones tomadas>"
 engram memory-sync

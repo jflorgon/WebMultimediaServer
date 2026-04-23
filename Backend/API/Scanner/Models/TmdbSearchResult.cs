@@ -71,3 +71,23 @@ public sealed class TmdbGenreResponse
     [JsonPropertyName("genres")]
     public List<TmdbGenre> Genres { get; set; } = [];
 }
+
+public sealed class TmdbEpisode
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    [JsonPropertyName("episode_number")]
+    public int EpisodeNumber { get; set; }
+    [JsonPropertyName("season_number")]
+    public int SeasonNumber { get; set; }
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+    [JsonPropertyName("overview")]
+    public string? Overview { get; set; }
+}
+
+public sealed class TmdbSeason
+{
+    [JsonPropertyName("episodes")]
+    public List<TmdbEpisode> Episodes { get; set; } = [];
+}

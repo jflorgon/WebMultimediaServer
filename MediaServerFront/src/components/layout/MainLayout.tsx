@@ -3,9 +3,12 @@ import { Navbar } from './Navbar'
 
 export function MainLayout() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div
+      className="min-h-screen text-white"
+      style={{ backgroundColor: 'var(--netflix-black)' }}
+    >
       <Navbar />
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main>
         <Outlet />
       </main>
     </div>

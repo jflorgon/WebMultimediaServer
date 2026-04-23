@@ -1,13 +1,66 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ─── Tokens Netflix ─────────────────────────────────────── */
+:root {
+  --netflix-red:    #E50914;
+  --netflix-red-dk: #B20710;
+  --netflix-black:  #141414;
+  --netflix-dark:   #1a1a1a;
+  --netflix-gray:   #2a2a2a;
+  --netflix-text:   #e5e5e5;
+
+  --navbar-h: 68px;
 }
 
+/* ─── Reset base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #030712;
-  color: #f9fafb;
+  font-family: 'Netflix Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: var(--netflix-black);
+  color: var(--netflix-text);
+  overflow-x: hidden;
+}
+
+/* ─── Scrollbar fina estilo Netflix ─────────────────────── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* ─── Carrusel horizontal sin scrollbar visible ─────────── */
+.carousel-track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 60px;
+  margin-bottom: -60px;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+
+.carousel-track > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* ─── Clase helper para gradiente hero ──────────────────── */
+.hero-gradient {
+  background: linear-gradient(
+    77deg,
+    rgba(0,0,0,0.85) 0%,
+    rgba(0,0,0,0.5)  50%,
+    transparent      100%
+  ),
+  linear-gradient(
+    to top,
+    rgba(20,20,20,1)   0%,
+    rgba(20,20,20,0.4) 30%,
+    transparent        70%
+  );
 }

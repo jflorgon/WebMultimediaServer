@@ -61,4 +61,20 @@ public sealed class TmdbClientService(HttpClient httpClient, IOptions<TmdbOption
         }
         catch { return []; }
     }
+
+    public async Task<TmdbSeason?> GetSeasonAsync(int seriesId, int seasonNumber, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = $"/3/tv/{seriesId}/season/{seasonNumber}?language=es-ES";
+            var response = await httpClient.GetFromJsonAsync<TmdbSeason>(url, cancellationToken);
+            await Task.Delay(RequestDelay, cancellationToken);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "TMDB season fetch failed for series {SeriesId}, season {Season}", seriesId, seasonNumber);
+            return null;
+        }
+    }
 }

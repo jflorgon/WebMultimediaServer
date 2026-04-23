@@ -5,8 +5,8 @@ export function formatRuntime(minutes?: number): string {
   return h > 0 ? `${h}h ${m}min` : `${m}min`
 }
 
-export function formatRating(rating?: number): string {
-  return rating ? rating.toFixed(1) : '-'
+export function formatRating(rating?: number | null): string {
+  return rating != null ? rating.toFixed(1) : '-'
 }
 
 export function formatDate(isoDate?: string): string {

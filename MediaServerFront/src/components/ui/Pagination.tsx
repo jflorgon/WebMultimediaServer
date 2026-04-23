@@ -11,23 +11,23 @@ export function Pagination({ page, totalPages, onPageChange }: PaginationProps) 
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-center gap-4 mt-8">
+    <div className="flex items-center justify-center gap-3 mt-12">
       <button
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-40 hover:bg-gray-600 transition-colors"
+        className="w-10 h-10 rounded-full border border-gray-600 text-white disabled:opacity-30 hover:border-white hover:text-white transition-colors disabled:cursor-not-allowed flex items-center justify-center"
       >
-        {t('pagination.previous')}
+        ←
       </button>
-      <span className="text-gray-400 text-sm">
+      <span className="text-gray-400 text-sm px-4">
         {page} {t('pagination.of')} {totalPages}
       </span>
       <button
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages}
-        className="px-4 py-2 rounded bg-gray-700 text-white disabled:opacity-40 hover:bg-gray-600 transition-colors"
+        className="w-10 h-10 rounded-full border border-gray-600 text-white disabled:opacity-30 hover:border-white hover:text-white transition-colors disabled:cursor-not-allowed flex items-center justify-center"
       >
-        {t('pagination.next')}
+        →
       </button>
     </div>
   )

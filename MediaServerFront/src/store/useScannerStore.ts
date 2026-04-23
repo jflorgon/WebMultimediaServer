@@ -5,6 +5,8 @@ import { scannerService } from '../services/scannerService'
 interface ScannerState {
   status: ScannerStatus | null
   loading: boolean
+  triggering: boolean
+  error: string | null
   fetchStatus: () => Promise<void>
   trigger: () => Promise<void>
 }
@@ -12,6 +14,8 @@ interface ScannerState {
 export const useScannerStore = create<ScannerState>((set) => ({
   status: null,
   loading: false,
+  triggering: false,
+  error: null,
 
   fetchStatus: async () => {
     set({ loading: true })
@@ -24,6 +28,12 @@ export const useScannerStore = create<ScannerState>((set) => ({
   },
 
   trigger: async () => {
-    await scannerService.trigger()
+    set({ triggering: true, error: null })
+    try {
+      await scannerService.trigger()
+      set({ triggering: false })
+    } catch (err) {
+      set({ triggering: false, error: 'Error al iniciar escaneo' })
+    }
   },
 }))

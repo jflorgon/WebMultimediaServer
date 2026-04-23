@@ -125,18 +125,25 @@ public sealed partial class MediaScannerService(
         HashSet<string> foundEpisodes,
         CancellationToken cancellationToken)
     {
+        const int DaysBeforeRefresh = 180;
         var seriesFolderName = Path.GetFileName(seriesFolder);
         var (cleanTitle, _) = ParseFileName(seriesFolderName);
 
         logger.LogDebug("Procesando serie: '{Title}' en {Folder}", cleanTitle, seriesFolder);
 
-        var result = await tmdbClient.SearchTvAsync(cleanTitle, cancellationToken);
+        var existing = await db.Series.FirstOrDefaultAsync(s => s.FilePath == seriesFolder, cancellationToken);
+        var shouldSearchTmdb = existing is null || (DateTime.UtcNow - existing.UpdatedAt).TotalDays >= DaysBeforeRefresh;
 
-        if (result is not null)
-            logger.LogInformation("Serie encontrada: '{Name}' → TMDB: {Title} (ID: {Id})",
-                cleanTitle, result.Name, result.Id);
-        else
-            logger.LogWarning("Sin coincidencia en TMDB para serie: '{Title}'", cleanTitle);
+        TmdbTvResult? result = null;
+        if (shouldSearchTmdb)
+        {
+            result = await tmdbClient.SearchTvAsync(cleanTitle, cancellationToken);
+            if (result is not null)
+                logger.LogInformation("Serie encontrada en TMDB: '{Name}' → {Title} (ID: {Id})",
+                    cleanTitle, result.Name, result.Id);
+            else
+                logger.LogInformation("Sin coincidencia en TMDB para serie: '{Title}'", cleanTitle);
+        }
 
         var genres = result?.GenreIds
             .Select(id => tvGenres.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty)
@@ -179,6 +186,10 @@ public sealed partial class MediaScannerService(
                     Path.GetExtension(f).ToLowerInvariant()))
                 .ToList();
 
+            var season = result is not null && shouldSearchTmdb
+                ? await tmdbClient.GetSeasonAsync(result.Id, seasonNumber.Value, cancellationToken)
+                : null;
+
             foreach (var episodeFile in episodeFiles)
             {
                 if (cancellationToken.IsCancellationRequested) break;
@@ -195,13 +206,16 @@ public sealed partial class MediaScannerService(
                     var actualSeason = parsedSeason > 0 ? parsedSeason : seasonNumber.Value;
                     var episodeTitle = EpisodeParser.ExtractEpisodeTitle(episodeFile);
 
+                    var tmdbEpisode = season?.Episodes.FirstOrDefault(e => e.EpisodeNumber == episodeNumber);
+                    var finalTitle = !string.IsNullOrEmpty(tmdbEpisode?.Name) ? tmdbEpisode.Name : episodeTitle;
+
                     await mediator.Send(new UpsertEpisodeCommand(
                         SeriesId: seriesId,
                         SeasonNumber: actualSeason,
                         EpisodeNumber: episodeNumber,
-                        Title: episodeTitle,
+                        Title: finalTitle,
                         FilePath: episodeFile,
-                        TmdbId: null
+                        TmdbId: tmdbEpisode?.Id
                     ), cancellationToken);
 
                     foundEpisodes.Add(episodeFile);
@@ -226,6 +240,7 @@ public sealed partial class MediaScannerService(
         List<TmdbGenre> movieGenres,
         CancellationToken cancellationToken)
     {
+        const int DaysBeforeRefresh = 180;
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         var (cleanTitle, year) = ParseFileName(fileName);
 
@@ -234,15 +249,26 @@ public sealed partial class MediaScannerService(
 
         if (DocumentaryFolderKeywords.Contains(mediaPathName))
         {
-            logger.LogDebug("Tipo detectado: Documental | Buscando en TMDB: '{Title}'", cleanTitle);
-            var result = await tmdbClient.SearchMovieAsync(cleanTitle, year, cancellationToken);
+            var existingDoc = await db.Documentaries.FirstOrDefaultAsync(d => d.FilePath == filePath, cancellationToken);
+            var shouldSearchTmdb = existingDoc is null || (DateTime.UtcNow - existingDoc.UpdatedAt).TotalDays >= DaysBeforeRefresh;
 
-            if (result is not null)
-                logger.LogInformation("Documental encontrado: {File} → TMDB: {Title} (ID: {Id})",
-                    Path.GetFileName(filePath), result.Title, result.Id);
+            TmdbMovieResult? result = null;
+            if (shouldSearchTmdb)
+            {
+                logger.LogDebug("Tipo detectado: Documental | Buscando en TMDB: '{Title}'", cleanTitle);
+                result = await tmdbClient.SearchMovieAsync(cleanTitle, year, cancellationToken);
+
+                if (result is not null)
+                    logger.LogInformation("Documental encontrado en TMDB: {File} → {Title} (ID: {Id})",
+                        Path.GetFileName(filePath), result.Title, result.Id);
+                else
+                    logger.LogInformation("Sin coincidencia en TMDB para documental: '{Title}' ({File})",
+                        cleanTitle, Path.GetFileName(filePath));
+            }
             else
-                logger.LogWarning("Sin coincidencia en TMDB para documental: '{Title}' ({File})",
-                    cleanTitle, Path.GetFileName(filePath));
+            {
+                logger.LogDebug("Documental existente y < 180 días, omitiendo búsqueda TMDB: {File}", Path.GetFileName(filePath));
+            }
 
             var genres = result?.GenreIds
                 .Select(id => movieGenres.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty)
@@ -266,15 +292,26 @@ public sealed partial class MediaScannerService(
         }
         else
         {
-            logger.LogDebug("Tipo detectado: Película | Buscando en TMDB: '{Title}'", cleanTitle);
-            var result = await tmdbClient.SearchMovieAsync(cleanTitle, year, cancellationToken);
+            var existingMovie = await db.Movies.FirstOrDefaultAsync(m => m.FilePath == filePath, cancellationToken);
+            var shouldSearchTmdb = existingMovie is null || (DateTime.UtcNow - existingMovie.UpdatedAt).TotalDays >= DaysBeforeRefresh;
 
-            if (result is not null)
-                logger.LogInformation("Película encontrada: {File} → TMDB: {Title} (ID: {Id})",
-                    Path.GetFileName(filePath), result.Title, result.Id);
+            TmdbMovieResult? result = null;
+            if (shouldSearchTmdb)
+            {
+                logger.LogDebug("Tipo detectado: Película | Buscando en TMDB: '{Title}'", cleanTitle);
+                result = await tmdbClient.SearchMovieAsync(cleanTitle, year, cancellationToken);
+
+                if (result is not null)
+                    logger.LogInformation("Película encontrada en TMDB: {File} → {Title} (ID: {Id})",
+                        Path.GetFileName(filePath), result.Title, result.Id);
+                else
+                    logger.LogInformation("Sin coincidencia en TMDB para película: '{Title}' ({File})",
+                        cleanTitle, Path.GetFileName(filePath));
+            }
             else
-                logger.LogWarning("Sin coincidencia en TMDB para película: '{Title}' ({File})",
-                    cleanTitle, Path.GetFileName(filePath));
+            {
+                logger.LogDebug("Película existente y < 180 días, omitiendo búsqueda TMDB: {File}", Path.GetFileName(filePath));
+            }
 
             var genres = result?.GenreIds
                 .Select(id => movieGenres.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty)
@@ -359,7 +396,9 @@ public sealed partial class MediaScannerService(
         if (yearMatch.Success && int.TryParse(yearMatch.Value.Trim('.', '(', ')'), out var y))
             year = y;
 
-        var title = YearRegex().Replace(fileName, string.Empty);
+        var title = fileName;
+        title = RemoveUnwantedBracketsRegex().Replace(title, " ");
+        title = YearRegex().Replace(title, string.Empty);
         title = CleanupRegex().Replace(title, " ").Trim();
         return (title, year);
     }
@@ -375,4 +414,7 @@ public sealed partial class MediaScannerService(
 
     [GeneratedRegex(@"[\.\-_]+")]
     private static partial Regex CleanupRegex();
+
+    [GeneratedRegex(@"[\(\[](?![SsTt]\d+[EeXx]\d+|2\d{3})[^\(\)\[\]]*[\)\]]")]
+    private static partial Regex RemoveUnwantedBracketsRegex();
 }
