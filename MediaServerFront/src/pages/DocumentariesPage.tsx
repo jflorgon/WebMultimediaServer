@@ -31,13 +31,13 @@ export function DocumentariesPage() {
         backgroundColor: 'var(--netflix-black)',
       }}
     >
-      <div className="pt-16 pb-6" style={{ paddingLeft: '4vw', paddingRight: '4vw' }}>
-        <div className="flex items-baseline gap-4 mb-8">
+      <div style={{ paddingTop: '4rem', paddingBottom: '1rem', paddingLeft: '4vw', paddingRight: '4vw' }}>
+        <div className="flex items-baseline gap-4" style={{ marginBottom: '2rem' }}>
           <h1 className="text-3xl font-black text-white">{t('nav.documentaries')}</h1>
           <span className="text-sm text-gray-500">{totalCount} títulos</span>
         </div>
 
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <input
             type="text"
             value={filters.title ?? ''}
@@ -80,7 +80,7 @@ export function DocumentariesPage() {
         </div>
       </div>
 
-      <div className="py-6" style={{ paddingLeft: '4vw', paddingRight: '4vw' }}>
+      <div style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem', paddingLeft: '4vw', paddingRight: '4vw' }}>
         {loading ? (
           <Spinner />
         ) : items.length === 0 ? (
