@@ -12,33 +12,50 @@ interface MediaCardProps {
   genres?: string[]
   linkTo: string
   subtitle?: string
+  expandOrigin?: string
+  onArrowLeft?: () => void
+  onArrowRight?: () => void
 }
 
 export function MediaCard({
   title, year, posterUrl, backdropUrl,
-  rating, genres, linkTo, subtitle
+  rating, genres, linkTo, subtitle,
+  expandOrigin,
+  onArrowLeft, onArrowRight
 }: MediaCardProps) {
   const [hovered, setHovered] = useState(false)
 
+  const useBackdrop = !!backdropUrl
   const imageUrl = backdropUrl ?? posterUrl
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft' && onArrowLeft) { e.preventDefault(); onArrowLeft() }
+    else if (e.key === 'ArrowRight' && onArrowRight) { e.preventDefault(); onArrowRight() }
+  }
+
   return (
-    <Link to={linkTo} className="block outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-md">
+    <Link
+      to={linkTo}
+      className="block outline-none rounded-md"
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+      onKeyDown={handleKeyDown}
+    >
       <motion.div
         className="relative overflow-visible rounded-md cursor-pointer"
         onHoverStart={() => setHovered(true)}
         onHoverEnd={() => setHovered(false)}
-        animate={hovered ? { scale: 1.25, zIndex: 20 } : { scale: 1, zIndex: 1 }}
+        animate={hovered ? { scale: 1.25, zIndex: 50 } : { scale: 1, zIndex: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25, delay: hovered ? 0.15 : 0 }}
-        style={{ transformOrigin: 'center center' }}
+        style={{ transformOrigin: expandOrigin ?? 'top center' }}
       >
-        {/* Imagen principal 16:9 */}
-        <div className="relative aspect-video overflow-hidden rounded-md bg-neutral-800">
+        {/* Imagen: 16:9 con backdrop, 2:3 con poster solo */}
+        <div className={`relative overflow-hidden rounded-md bg-neutral-800 ${useBackdrop ? 'aspect-video' : 'aspect-[2/3]'}`}>
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
               loading="lazy"
             />
           ) : (

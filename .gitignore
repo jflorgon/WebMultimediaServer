@@ -3,6 +3,10 @@
 
 # Local Docker overrides — paths y config específicos de cada máquina
 docker-compose.override.yml
+docker-compose.nas.yml
+
+# Docker local data — BD, media, etc. (no versionar)
+.data/
 
 ## A streamlined .gitignore for modern .NET projects
 ## including temporary files, build results, and

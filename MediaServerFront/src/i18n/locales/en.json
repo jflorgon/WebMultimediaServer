@@ -9,7 +9,9 @@
     "recentMovies": "Recent Movies",
     "recentSeries": "Recent Series",
     "recentDocumentaries": "Recent Documentaries",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "noContent": "No content",
+    "noContentSubtitle": "No movies, series or documentaries registered. Run the scanner to add content."
   },
   "detail": {
     "overview": "Overview",

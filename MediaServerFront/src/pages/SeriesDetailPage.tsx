@@ -50,7 +50,7 @@ export function SeriesDetailPage() {
           <img
             src={selected.backdropUrl}
             alt=""
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top"
           />
         ) : (
           <div className="w-full h-full bg-neutral-900" />
@@ -84,7 +84,7 @@ export function SeriesDetailPage() {
             <img
               src={selected.posterUrl}
               alt={selected.title}
-              className="w-36 rounded-lg flex-shrink-0 shadow-2xl hidden md:block"
+              className="w-36 h-auto rounded-lg flex-shrink-0 shadow-2xl hidden md:block self-start object-contain"
             />
           )}
           <div className="flex-1">
