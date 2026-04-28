@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { formatRating } from '../../utils/formatters'
@@ -24,6 +24,7 @@ export function MediaCard({
   onArrowLeft, onArrowRight
 }: MediaCardProps) {
   const [hovered, setHovered] = useState(false)
+  const location = useLocation()
 
   const useBackdrop = !!backdropUrl
   const imageUrl = backdropUrl ?? posterUrl
@@ -36,6 +37,7 @@ export function MediaCard({
   return (
     <Link
       to={linkTo}
+      state={{ backgroundLocation: location }}
       className="block outline-none rounded-md"
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}

@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import type { FilterParams } from '../types/common'
 import type { Documentary, DocumentaryListItem } from '../types/documentary'
 import { documentaryService } from '../services/documentaryService'
+
+const PAGE_SIZE = 24
 
 interface DocumentariesState {
   items: DocumentaryListItem[]
@@ -9,10 +10,14 @@ interface DocumentariesState {
   selected: Documentary | null
   loading: boolean
   error: string | null
-  filters: FilterParams
-  fetchAll: (params?: FilterParams) => Promise<void>
+  title: string
+  genre: string | undefined
+  page: number
+  fetchAll: () => Promise<void>
+  appendItems: () => Promise<void>
   fetchById: (id: string) => Promise<void>
-  setFilters: (filters: FilterParams) => void
+  setTitle: (title: string) => void
+  setGenre: (genre: string | undefined) => void
 }
 
 export const useDocumentariesStore = create<DocumentariesState>((set, get) => ({
@@ -21,13 +26,28 @@ export const useDocumentariesStore = create<DocumentariesState>((set, get) => ({
   selected: null,
   loading: false,
   error: null,
-  filters: { page: 1, pageSize: 20 },
+  title: '',
+  genre: undefined,
+  page: 1,
 
-  fetchAll: async (params) => {
-    set({ loading: true, error: null })
+  fetchAll: async () => {
+    const { title, genre } = get()
+    set({ loading: true, error: null, page: 1 })
     try {
-      const result = await documentaryService.getAll(params ?? get().filters)
+      const result = await documentaryService.getAll({ title: title || undefined, genre, page: 1, pageSize: PAGE_SIZE })
       set({ items: result.items, totalCount: result.totalCount, loading: false })
+    } catch {
+      set({ error: 'Error al cargar documentales', loading: false })
+    }
+  },
+
+  appendItems: async () => {
+    const { title, genre, page } = get()
+    const nextPage = page + 1
+    set({ loading: true, page: nextPage })
+    try {
+      const result = await documentaryService.getAll({ title: title || undefined, genre, page: nextPage, pageSize: PAGE_SIZE })
+      set(state => ({ items: [...state.items, ...result.items], totalCount: result.totalCount, loading: false }))
     } catch {
       set({ error: 'Error al cargar documentales', loading: false })
     }
@@ -43,5 +63,6 @@ export const useDocumentariesStore = create<DocumentariesState>((set, get) => ({
     }
   },
 
-  setFilters: (filters) => set({ filters }),
+  setTitle: (title) => set({ title }),
+  setGenre: (genre) => set({ genre }),
 }))

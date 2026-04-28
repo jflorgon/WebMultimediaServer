@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useDocumentariesStore } from '../store/useDocumentariesStore'
 import { Spinner } from '../components/ui/Spinner'
+import { VideoPlayer } from '../components/ui/VideoPlayer'
 import { formatRuntime, formatRating } from '../utils/formatters'
 
 export function DocumentaryDetailPage() {
@@ -11,14 +12,25 @@ export function DocumentaryDetailPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { selected, loading, fetchById } = useDocumentariesStore()
+  const [playing, setPlaying] = useState(false)
 
   useEffect(() => { if (id) fetchById(id) }, [id, fetchById])
 
   if (loading) return <Spinner />
   if (!selected) return <p className="text-gray-400">{t('errors.notFound')}</p>
 
+  const streamSrc = `/api/streaming/documentaries/${selected.id}/playlist.m3u8`
+
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
+      {playing && (
+        <VideoPlayer
+          src={streamSrc}
+          title={selected.title}
+          onClose={() => setPlaying(false)}
+        />
+      )}
+
       <div
         className="relative w-full"
         style={{
@@ -89,6 +101,26 @@ export function DocumentaryDetailPage() {
                 </span>
               )}
             </div>
+
+            <button
+              onClick={() => setPlaying(true)}
+              style={{
+                backgroundColor: '#e50914',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                padding: '10px 28px',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginBottom: 24,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              ▶ Reproducir
+            </button>
 
             {selected.genres.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">

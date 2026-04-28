@@ -244,9 +244,9 @@ export function HomePage() {
   const heroFetchedRef = useRef(false)
 
   useEffect(() => {
-    fetchMovies({ page: 1, pageSize: 20 })
-    fetchSeries({ page: 1, pageSize: 20 })
-    fetchDocs({ page: 1, pageSize: 20 })
+    fetchMovies()
+    fetchSeries()
+    fetchDocs()
   }, [fetchMovies, fetchSeries, fetchDocs])
 
   useEffect(() => {

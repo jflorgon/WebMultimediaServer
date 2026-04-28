@@ -32,7 +32,7 @@ export const useScannerStore = create<ScannerState>((set) => ({
     try {
       await scannerService.trigger()
       set({ triggering: false })
-    } catch (err) {
+    } catch {
       set({ triggering: false, error: 'Error al iniciar escaneo' })
     }
   },

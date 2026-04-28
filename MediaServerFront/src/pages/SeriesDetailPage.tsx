@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useSeriesStore } from '../store/useSeriesStore'
 import { Spinner } from '../components/ui/Spinner'
+import { VideoPlayer } from '../components/ui/VideoPlayer'
 import { formatRating } from '../utils/formatters'
 import { seriesService } from '../services/seriesService'
 import type { EpisodeListItem } from '../types/series'
@@ -15,6 +16,7 @@ export function SeriesDetailPage() {
   const { selected, loading, fetchById } = useSeriesStore()
   const [episodes, setEpisodes] = useState<EpisodeListItem[]>([])
   const [activeSeason, setActiveSeason] = useState<number | null>(null)
+  const [playingEpisodeId, setPlayingEpisodeId] = useState<string | null>(null)
 
   useEffect(() => { if (id) fetchById(id) }, [id, fetchById])
 
@@ -39,6 +41,14 @@ export function SeriesDetailPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
+      {playingEpisodeId && (
+        <VideoPlayer
+          src={`/api/streaming/episodes/${playingEpisodeId}/playlist.m3u8`}
+          title={episodes.find(e => e.id === playingEpisodeId)?.title ?? ''}
+          onClose={() => setPlayingEpisodeId(null)}
+        />
+      )}
+
       <div
         className="relative w-full"
         style={{
@@ -160,7 +170,7 @@ export function SeriesDetailPage() {
                 .map((ep) => (
                   <li
                     key={ep.id}
-                    className="flex gap-4 p-4 rounded hover:bg-gray-900 transition-colors"
+                    className="flex gap-4 p-4 rounded hover:bg-gray-900 transition-colors items-center"
                   >
                     <span className="text-4xl font-black text-gray-700 w-16 flex-shrink-0 text-right">
                       {String(ep.episodeNumber).padStart(2, '0')}
@@ -168,6 +178,23 @@ export function SeriesDetailPage() {
                     <div className="flex-1">
                       <p className="text-white font-medium">{ep.title}</p>
                     </div>
+                    <button
+                      onClick={() => setPlayingEpisodeId(ep.id)}
+                      title="Reproducir episodio"
+                      style={{
+                        backgroundColor: '#e50914',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 6,
+                        padding: '6px 14px',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      ▶
+                    </button>
                   </li>
                 ))}
             </ul>
