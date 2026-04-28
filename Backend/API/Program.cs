@@ -2,6 +2,7 @@ using API.Middleware;
 using API.Scanner.Models;
 using API.Scanner.Services;
 using API.Scanner.Workers;
+using API.Services;
 using Application;
 using Application.Common.Behaviors;
 using Application.Common.Interfaces;
@@ -28,6 +29,9 @@ builder.Services.AddValidatorsFromAssembly(typeof(AssemblyMarker).Assembly);
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(AssemblyMarker).Assembly);
+
+// Streaming HLS
+builder.Services.AddSingleton<IHlsStreamingService, HlsStreamingService>();
 
 // Scanner
 builder.Services.Configure<ScannerOptions>(builder.Configuration.GetSection("Scanner"));

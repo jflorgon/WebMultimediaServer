@@ -342,6 +342,16 @@ public sealed partial class MediaScannerService(
         HashSet<string> foundEpisodes,
         CancellationToken cancellationToken)
     {
+        var anyPathAccessible = options.Value.MediaPaths.Any(Directory.Exists);
+        if (!anyPathAccessible)
+        {
+            logger.LogError(
+                "Limpieza cancelada: ninguna ruta de medios es accesible ({Paths}). " +
+                "Se omite el borrado para evitar pérdida de datos.",
+                string.Join(", ", options.Value.MediaPaths));
+            return;
+        }
+
         logger.LogInformation("Iniciando limpieza de elementos eliminados del disco...");
 
         var moviesToDelete = await db.Movies
@@ -393,7 +403,7 @@ public sealed partial class MediaScannerService(
     {
         var yearMatch = YearRegex().Match(fileName);
         int? year = null;
-        if (yearMatch.Success && int.TryParse(yearMatch.Value.Trim('.', '(', ')'), out var y))
+        if (yearMatch.Success && int.TryParse(yearMatch.Groups[1].Value, out var y))
             year = y;
 
         var title = fileName;
@@ -409,7 +419,7 @@ public sealed partial class MediaScannerService(
         return int.TryParse(dateString[..4], out var y) ? y : null;
     }
 
-    [GeneratedRegex(@"[\.\s\(\[]\d{4}[\)\]]?")]
+    [GeneratedRegex(@"[\.\s\(\[](\d{4})[\)\]]?")]
     private static partial Regex YearRegex();
 
     [GeneratedRegex(@"[\.\-_]+")]
