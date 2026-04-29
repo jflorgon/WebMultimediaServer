@@ -13,7 +13,7 @@ public sealed class GetDocumentariesQueryHandler(IApplicationDbContext db, IMapp
 {
     public async Task<PagedResult<DocumentaryListItemDto>> Handle(GetDocumentariesQuery request, CancellationToken cancellationToken)
     {
-        var query = db.Documentaries.AsQueryable();
+        var query = db.Documentaries.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Title))
             query = query.Where(d => d.Title.ToLower().Contains(request.Title.ToLower()));

@@ -1,19 +1,19 @@
 namespace Contracts.Movies;
 
-public sealed class MovieDto
+public sealed record MovieDto
 {
-    public Guid Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string? OriginalTitle { get; set; }
-    public int? Year { get; set; }
-    public string FilePath { get; set; } = string.Empty;
-    public string? PosterUrl { get; set; }
-    public string? BackdropUrl { get; set; }
-    public string? Overview { get; set; }
-    public List<string> Genres { get; set; } = [];
-    public double? Rating { get; set; }
-    public int? RuntimeMinutes { get; set; }
-    public int? TmdbId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public Guid Id { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string? OriginalTitle { get; init; }
+    public int? Year { get; init; }
+    public string FilePath { get; init; } = string.Empty;
+    public string? PosterUrl { get; init; }
+    public string? BackdropUrl { get; init; }
+    public string? Overview { get; init; }
+    public List<string> Genres { get; init; } = [];
+    public double? Rating { get; init; }
+    public int? RuntimeMinutes { get; init; }
+    public int? TmdbId { get; init; }
+    public DateTime CreatedAt { get; init; }
+    public DateTime UpdatedAt { get; init; }
 }

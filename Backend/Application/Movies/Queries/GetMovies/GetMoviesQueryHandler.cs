@@ -13,7 +13,7 @@ public sealed class GetMoviesQueryHandler(IApplicationDbContext db, IMapper mapp
 {
     public async Task<PagedResult<MovieListItemDto>> Handle(GetMoviesQuery request, CancellationToken cancellationToken)
     {
-        var query = db.Movies.AsQueryable();
+        var query = db.Movies.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Title))
             query = query.Where(m => m.Title.ToLower().Contains(request.Title.ToLower()));

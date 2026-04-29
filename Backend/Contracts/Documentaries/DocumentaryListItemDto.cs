@@ -1,11 +1,11 @@
 namespace Contracts.Documentaries;
 
-public sealed class DocumentaryListItemDto
+public sealed record DocumentaryListItemDto
 {
-    public Guid Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public int? Year { get; set; }
-    public string? PosterUrl { get; set; }
-    public double? Rating { get; set; }
-    public List<string> Genres { get; set; } = [];
+    public Guid Id { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public int? Year { get; init; }
+    public string? PosterUrl { get; init; }
+    public double? Rating { get; init; }
+    public List<string> Genres { get; init; } = [];
 }

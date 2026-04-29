@@ -1,12 +1,12 @@
 namespace Contracts.Series;
 
-public sealed class SeriesListItemDto
+public sealed record SeriesListItemDto
 {
-    public Guid Id { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public int? Year { get; set; }
-    public string? PosterUrl { get; set; }
-    public double? Rating { get; set; }
-    public int Seasons { get; set; }
-    public List<string> Genres { get; set; } = [];
+    public Guid Id { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public int? Year { get; init; }
+    public string? PosterUrl { get; init; }
+    public double? Rating { get; init; }
+    public int Seasons { get; init; }
+    public List<string> Genres { get; init; } = [];
 }

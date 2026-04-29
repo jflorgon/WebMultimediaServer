@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useMoviesStore } from '../store/useMoviesStore'
 import { Spinner } from '../components/ui/Spinner'
-import { VideoPlayer } from '../components/ui/VideoPlayer'
 import { formatRuntime, formatRating } from '../utils/formatters'
+
+const VideoPlayer = lazy(() =>
+  import('../components/ui/VideoPlayer').then(m => ({ default: m.VideoPlayer }))
+)
 
 export function MovieDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -24,11 +27,13 @@ export function MovieDetailPage() {
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
       {playing && (
-        <VideoPlayer
-          src={streamSrc}
-          title={selected.title}
-          onClose={() => setPlaying(false)}
-        />
+        <Suspense fallback={null}>
+          <VideoPlayer
+            src={streamSrc}
+            title={selected.title}
+            onClose={() => setPlaying(false)}
+          />
+        </Suspense>
       )}
 
       <div

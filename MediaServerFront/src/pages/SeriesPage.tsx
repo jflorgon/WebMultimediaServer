@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSeriesStore } from '../store/useSeriesStore'
 import { useScrollRestoration } from '../hooks/useScrollRestoration'
@@ -34,9 +34,10 @@ export function SeriesPage() {
 
   const hasMore = items.length < totalCount
 
-  const availableGenres = Array.from(
-    new Set(items.flatMap((s) => s.genres ?? []))
-  ).sort()
+  const availableGenres = useMemo(
+    () => Array.from(new Set(items.flatMap((s) => s.genres ?? []))).sort(),
+    [items]
+  )
 
   return (
     <div

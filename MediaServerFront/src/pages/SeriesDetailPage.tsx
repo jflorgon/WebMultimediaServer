@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useSeriesStore } from '../store/useSeriesStore'
 import { Spinner } from '../components/ui/Spinner'
-import { VideoPlayer } from '../components/ui/VideoPlayer'
 import { formatRating } from '../utils/formatters'
 import { seriesService } from '../services/seriesService'
 import type { EpisodeListItem } from '../types/series'
+
+const VideoPlayer = lazy(() =>
+  import('../components/ui/VideoPlayer').then(m => ({ default: m.VideoPlayer }))
+)
 
 export function SeriesDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -34,19 +37,18 @@ export function SeriesDetailPage() {
     return acc
   }, {})
   const seasonNumbers = Object.keys(seasonMap).map(Number).sort((a, b) => a - b)
-
-  if (activeSeason === null && seasonNumbers.length > 0) {
-    setActiveSeason(seasonNumbers[0])
-  }
+  const currentSeason = activeSeason ?? seasonNumbers[0] ?? null
 
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
       {playingEpisodeId && (
-        <VideoPlayer
-          src={`/api/streaming/episodes/${playingEpisodeId}/playlist.m3u8`}
-          title={episodes.find(e => e.id === playingEpisodeId)?.title ?? ''}
-          onClose={() => setPlayingEpisodeId(null)}
-        />
+        <Suspense fallback={null}>
+          <VideoPlayer
+            src={`/api/streaming/episodes/${playingEpisodeId}/playlist.m3u8`}
+            title={episodes.find(e => e.id === playingEpisodeId)?.title ?? ''}
+            onClose={() => setPlayingEpisodeId(null)}
+          />
+        </Suspense>
       )}
 
       <div
@@ -153,7 +155,7 @@ export function SeriesDetailPage() {
                 key={season}
                 onClick={() => setActiveSeason(season)}
                 className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
-                  activeSeason === season
+                  currentSeason === season
                     ? 'text-white border-white'
                     : 'text-gray-400 border-transparent hover:text-gray-200'
                 }`}
@@ -163,9 +165,9 @@ export function SeriesDetailPage() {
             ))}
           </div>
 
-          {activeSeason !== null && seasonMap[activeSeason] && (
+          {currentSeason !== null && seasonMap[currentSeason] && (
             <ul className="space-y-2">
-              {seasonMap[activeSeason]
+              {seasonMap[currentSeason!]
                 .sort((a, b) => a.episodeNumber - b.episodeNumber)
                 .map((ep) => (
                   <li

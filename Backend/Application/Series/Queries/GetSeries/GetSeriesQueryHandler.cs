@@ -13,7 +13,7 @@ public sealed class GetSeriesQueryHandler(IApplicationDbContext db, IMapper mapp
 {
     public async Task<PagedResult<SeriesListItemDto>> Handle(GetSeriesQuery request, CancellationToken cancellationToken)
     {
-        var query = db.Series.AsQueryable();
+        var query = db.Series.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(request.Title))
             query = query.Where(s => s.Title.ToLower().Contains(request.Title.ToLower()));

@@ -1,9 +1,9 @@
 namespace Contracts.Scanner;
 
-public sealed class ScannerStatusDto
+public sealed record ScannerStatusDto
 {
-    public bool IsRunning { get; set; }
-    public DateTime? LastRunAt { get; set; }
-    public string? LastResult { get; set; }
-    public int ItemsScanned { get; set; }
+    public bool IsRunning { get; init; }
+    public DateTime? LastRunAt { get; init; }
+    public string? LastResult { get; init; }
+    public int ItemsScanned { get; init; }
 }
