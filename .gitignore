@@ -1,6 +1,14 @@
 # Secrets — never commit
 .env
 
+# Claude Code — solo versionar skills
+.claude/settings.local.json
+.claude/settings.local.json.*
+.claude/worktrees/
+
+# Engram — estado interno, no versionar
+.engram/
+
 # Local Docker overrides — paths y config específicos de cada máquina
 docker-compose.override.yml
 docker-compose.nas.yml
