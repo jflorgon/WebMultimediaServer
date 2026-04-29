@@ -127,7 +127,7 @@ public sealed partial class MediaScannerService(
     {
         const int DaysBeforeRefresh = 180;
         var seriesFolderName = Path.GetFileName(seriesFolder);
-        var (cleanTitle, _) = ParseFileName(seriesFolderName);
+        var (cleanTitle, folderYear) = ParseFileName(seriesFolderName);
 
         logger.LogDebug("Procesando serie: '{Title}' en {Folder}", cleanTitle, seriesFolder);
 
@@ -137,7 +137,7 @@ public sealed partial class MediaScannerService(
         TmdbTvResult? result = null;
         if (shouldSearchTmdb)
         {
-            result = await tmdbClient.SearchTvAsync(cleanTitle, cancellationToken);
+            result = await tmdbClient.SearchTvAsync(cleanTitle, folderYear, cancellationToken);
             if (result is not null)
                 logger.LogInformation("Serie encontrada en TMDB: '{Name}' → {Title} (ID: {Id})",
                     cleanTitle, result.Name, result.Id);
@@ -229,6 +229,60 @@ public sealed partial class MediaScannerService(
 
             logger.LogInformation("Temporada {Season} de '{Series}': {Count} episodios procesados",
                 seasonNumber, cleanTitle, episodeFiles.Count);
+        }
+
+        // Estructura plana: episodios directamente en la carpeta de serie sin subcarpetas de temporada
+        var flatEpisodeFiles = Directory.EnumerateFiles(seriesFolder)
+            .Where(f => options.Value.VideoExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+            .ToList();
+
+        if (flatEpisodeFiles.Count > 0)
+        {
+            var tmdbSeasonCache = new Dictionary<int, TmdbSeason?>();
+
+            foreach (var episodeFile in flatEpisodeFiles)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+                try
+                {
+                    var parsed = EpisodeParser.ParseEpisodeNumbers(episodeFile);
+                    if (parsed is null)
+                    {
+                        logger.LogDebug("No se pudo parsear número de episodio: {File}", Path.GetFileName(episodeFile));
+                        continue;
+                    }
+
+                    var (parsedSeason, episodeNumber) = parsed.Value;
+                    var actualFlatSeason = parsedSeason > 0 ? parsedSeason : 1;
+
+                    if (result is not null && shouldSearchTmdb && !tmdbSeasonCache.ContainsKey(actualFlatSeason))
+                        tmdbSeasonCache[parsedSeason] = await tmdbClient.GetSeasonAsync(result.Id, parsedSeason, cancellationToken);
+
+                    var tmdbSeason = tmdbSeasonCache.GetValueOrDefault(actualFlatSeason);
+                    var tmdbEpisode = tmdbSeason?.Episodes.FirstOrDefault(e => e.EpisodeNumber == episodeNumber);
+                    var episodeTitle = EpisodeParser.ExtractEpisodeTitle(episodeFile);
+                    var finalTitle = !string.IsNullOrEmpty(tmdbEpisode?.Name) ? tmdbEpisode.Name : episodeTitle;
+
+                    await mediator.Send(new UpsertEpisodeCommand(
+                        SeriesId: seriesId,
+                        SeasonNumber: actualFlatSeason,
+                        EpisodeNumber: episodeNumber,
+                        Title: finalTitle,
+                        FilePath: episodeFile,
+                        TmdbId: tmdbEpisode?.Id
+                    ), cancellationToken);
+
+                    foundEpisodes.Add(episodeFile);
+                    episodeCount++;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error procesando episodio: {File}", episodeFile);
+                }
+            }
+
+            if (episodeCount > 0)
+                logger.LogInformation("'{Series}' (estructura plana): {Count} episodios procesados", cleanTitle, episodeCount);
         }
 
         return episodeCount;
@@ -425,6 +479,6 @@ public sealed partial class MediaScannerService(
     [GeneratedRegex(@"[\.\-_]+")]
     private static partial Regex CleanupRegex();
 
-    [GeneratedRegex(@"[\(\[](?![SsTt]\d+[EeXx]\d+|2\d{3})[^\(\)\[\]]*[\)\]]")]
+    [GeneratedRegex(@"[\(\[](?![SsTt]\d+[EeXx]\d+|\d+[xX]\d+|2\d{3})[^\(\)\[\]]*[\)\]]")]
     private static partial Regex RemoveUnwantedBracketsRegex();
 }

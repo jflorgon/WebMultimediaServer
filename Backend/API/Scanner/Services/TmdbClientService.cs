@@ -26,11 +26,12 @@ public sealed class TmdbClientService(HttpClient httpClient, IOptions<TmdbOption
         }
     }
 
-    public async Task<TmdbTvResult?> SearchTvAsync(string title, CancellationToken cancellationToken = default)
+    public async Task<TmdbTvResult?> SearchTvAsync(string title, int? year = null, CancellationToken cancellationToken = default)
     {
         try
         {
-            var url = $"/3/search/tv?query={Uri.EscapeDataString(title)}&language=es-ES";
+            var yearParam = year.HasValue ? $"&first_air_date_year={year}" : string.Empty;
+            var url = $"/3/search/tv?query={Uri.EscapeDataString(title)}{yearParam}&language=es-ES";
             var response = await httpClient.GetFromJsonAsync<TmdbSearchResponse<TmdbTvResult>>(url, cancellationToken);
             await Task.Delay(RequestDelay, cancellationToken);
             return response?.Results.FirstOrDefault();

@@ -4,8 +4,8 @@ namespace API.Scanner.Services;
 
 internal static partial class EpisodeParser
 {
-    // Carpetas de temporada: T1, T01, T 1, Temporada 1, Temporada 01, Season 1, Season 01
-    [GeneratedRegex(@"^(?:T(?:emporada)?|Season|Temporada)\s*0*(\d+)$", RegexOptions.IgnoreCase)]
+    // Carpetas de temporada: T1, T01, Season 1, Temporada 1, "Serie T1", "Serie Temporada 2", etc.
+    [GeneratedRegex(@"\b(?:T(?:emporada)?|Season|Temporada)\s*0*(\d+)$", RegexOptions.IgnoreCase)]
     private static partial Regex SeasonFolderRegex();
 
     // Cap/Capítulo NNN — prioridad 1
