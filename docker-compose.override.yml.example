@@ -1,0 +1,7 @@
+# Copia este fichero a docker-compose.override.yml (gitignored) y ajusta según tu entorno.
+# Se incluye automáticamente si existe cuando corres docker-start.py.
+
+services:
+  sqlserver:
+    ports:
+      - "1433:1433"   # Acceso desde SSMS / Azure Data Studio en desarrollo

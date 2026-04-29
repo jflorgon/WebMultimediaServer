@@ -8,8 +8,13 @@ Comandos:
   python docker-start.py down           Apagar (BD persiste)
   python docker-start.py logs -f mediaserver-api
   python docker-start.py watch          Vigilar NAS y reconectar cuando vuelva
+
+Modo producción (sin NAS, media montada localmente):
+  python docker-start.py --prod up -d
+  python docker-start.py --prod up --build -d
 """
 
+import os
 import subprocess
 import socket
 import sys
@@ -20,8 +25,22 @@ NAS_HOST = "192.168.1.90"
 NAS_PORT = 445
 WATCH_INTERVAL = 30
 
-BASE_FILES = ["-f", "docker-compose.yml", "-f", "docker-compose.override.yml"]
-NAS_FILES  = ["-f", "docker-compose.nas.yml"]
+
+def get_base_files():
+    files = ["-f", "docker-compose.yml"]
+    if os.path.exists("docker-compose.override.yml"):
+        files += ["-f", "docker-compose.override.yml"]
+    return files
+
+
+def compose_cmd(nas_available, prod, *args):
+    cmd = ["docker-compose"] + get_base_files()
+    if prod:
+        cmd += ["-f", "docker-compose.prod.yml"]
+    elif nas_available:
+        cmd += ["-f", "docker-compose.nas.yml"]
+    cmd += list(args)
+    return cmd
 
 
 def is_nas_available(timeout=2):
@@ -32,19 +51,11 @@ def is_nas_available(timeout=2):
         return False
 
 
-def compose_cmd(nas_available, *args):
-    cmd = ["docker-compose"] + BASE_FILES
-    if nas_available:
-        cmd += NAS_FILES
-    cmd += list(args)
-    return cmd
-
-
 def run(cmd):
     subprocess.run(cmd, check=True)
 
 
-def watch():
+def watch(prod):
     print(f"[WATCH] Vigilando NAS en {NAS_HOST}:{NAS_PORT} cada {WATCH_INTERVAL}s (Ctrl+C para salir)")
 
     last_nas = is_nas_available()
@@ -70,7 +81,7 @@ def watch():
             print("[WATCH] NAS perdido -> reconectando API sin volumen NAS...")
 
         try:
-            run(compose_cmd(nas, "up", "-d", "--force-recreate", "mediaserver-api"))
+            run(compose_cmd(nas, prod, "up", "-d", "--force-recreate", "mediaserver-api"))
             last_nas = nas
             print(f"[WATCH] API reiniciado {'con' if nas else 'sin'} NAS")
         except subprocess.CalledProcessError:
@@ -78,20 +89,34 @@ def watch():
 
 
 def main():
-    if "--volumes" in sys.argv or "-v" in sys.argv:
+    args = sys.argv[1:]
+
+    if "--volumes" in args or "-v" in args:
         print("[ERROR] No uses -v/--volumes, borraría la base de datos.")
         print("        Para borrar la BD: docker volume rm webmultimediaserver_sqlserver-data")
         sys.exit(1)
 
-    if sys.argv[1:] == ["watch"]:
-        watch()
+    prod = "--prod" in args
+    if prod:
+        args = [a for a in args if a != "--prod"]
+
+    if args == ["watch"]:
+        watch(prod)
+        return
+
+    if prod:
+        print("[OK] Modo producción -> media local en /mnt/nas/, sin NAS CIFS")
+        try:
+            run(compose_cmd(False, True, *args))
+        except subprocess.CalledProcessError as e:
+            sys.exit(e.returncode)
         return
 
     nas = is_nas_available()
     print("[OK] NAS disponible -> montaje incluido" if nas else "[WARN] NAS no disponible -> sin montajes de red")
 
     try:
-        run(compose_cmd(nas, *sys.argv[1:]))
+        run(compose_cmd(nas, False, *args))
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
 

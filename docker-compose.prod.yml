@@ -1,0 +1,16 @@
+services:
+  sqlserver:
+    ports:
+      - "1433:1433"
+
+  mediaserver-api:
+    ports:
+      - "5001:5001"
+    volumes:
+      - /mnt/nas/Peliculas:/media/movies:ro
+      - /mnt/nas/Series:/media/series:ro
+      - /mnt/nas/Documentales:/media/documentaries:ro
+    environment:
+      Scanner__MediaPaths__0: /media/movies
+      Scanner__MediaPaths__1: /media/series
+      Scanner__MediaPaths__2: /media/documentaries
