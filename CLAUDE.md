@@ -61,20 +61,27 @@ Stack: .NET 8, C# 12, MediatR, EF Core (SQL Server), FluentValidation, AutoMappe
 
 ## Scanner — Comportamiento y Estructura de Directorios
 
-### Estructura de carpetas esperada
+> Las reglas de parseo completas (formatos de nombre, regexes, ejemplos) están en **[SCANNER-PARSING.md](SCANNER-PARSING.md)**.
 
-**Series** (jerarquía de 3 niveles):
+### Estructura de carpetas soportada
+
+**Series con subcarpetas de temporada:**
 ```
 /media/series/
-  Breaking Bad/          ← carpeta de serie
-    T1/                  ← temporada (T1, T01, Season 1, Temporada 1, etc.)
-      episode(1x01).mkv  ← fichero de episodio
-      episode(1x02).mkv
-    T2/
-      episode(2x01).mkv
+  Breaking Bad (2008)/    ← carpeta de serie (año opcional)
+    T1/                   ← subcarpeta de temporada
+      1x01 Pilot.mkv
 ```
 
-**Películas y Documentales** (plano):
+**Series en estructura plana** (episodios directamente en la carpeta de serie):
+```
+/media/series/
+  Pluribus/
+    Pluribus [01x07] 720p.mkv   ← temporada y episodio en el nombre del fichero
+```
+Si el fichero no indica temporada en el nombre, se asume **temporada 1**.
+
+**Películas y Documentales** (siempre plano):
 ```
 /media/movies/
   movie.mkv
@@ -82,16 +89,14 @@ Stack: .NET 8, C# 12, MediatR, EF Core (SQL Server), FluentValidation, AutoMappe
   documentary.mkv
 ```
 
-### Parseo de episodios
+### Parseo de episodios — resumen
 
-El scanner detecta números de episodio en el nombre del fichero (orden de prioridad):
+Cuatro patrones en orden de prioridad (ver `EpisodeParser.cs` y `SCANNER-PARSING.md`):
 
-1. **Cap/Capítulo NNN** — `Cap 102`, `[Capítulo 102]` → S1E02
-2. **SxEE** — `1x02`, `[01x05]` → temporada x episodio
-3. **Compacto [NNN]** — `[102]` → S1E02
-4. **Compacto bare** — bare `102` → S1E02 (fallback)
-
-Todos los formatos soportan delimitadores opcionales `()` o `[]`.
+1. **Cap/Capítulo NNN** — `Cap 102`, `[Cap.102]`, `[Capítulo 102]` → S1E02
+2. **SxEE** — `1x02`, `[01x05]` → temporada × episodio
+3. **Compacto [NNN]** — `[102]`, `(305)` → S1E02
+4. **Compacto bare** — `102` en límite de palabra → S1E02 (fallback, no funciona con `_`)
 
 ### Comportamiento del scanner
 
@@ -104,6 +109,7 @@ Todos los formatos soportan delimitadores opcionales `()` o `[]`.
 - Al final del escaneo, elimina registros cuyo FilePath/FolderPath ya no existe en disco
 - Series, Episodes, Movies, Documentaries — todos limpios automáticamente
 - Los episodios se borran por cascade si su serie es eliminada
+- Guard: si ninguna ruta de medios es accesible, el borrado se cancela
 
 **Trigger manual:**
 - `POST /api/scanner/trigger` — encola un escaneo inmediato
