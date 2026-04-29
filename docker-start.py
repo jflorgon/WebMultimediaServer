@@ -34,7 +34,7 @@ def get_base_files():
 
 
 def compose_cmd(nas_available, prod, *args):
-    cmd = ["docker-compose"] + get_base_files()
+    cmd = ["docker", "compose"] + get_base_files()
     if prod:
         cmd += ["-f", "docker-compose.prod.yml"]
     elif nas_available:

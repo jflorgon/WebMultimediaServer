@@ -155,41 +155,16 @@ npm run lint
 
 ### Docker
 
-Usar **siempre** el script `docker-start.py` en lugar de `docker-compose` directamente:
+Ver **[DEPLOYMENT.md](DEPLOYMENT.md)** para instrucciones completas de despliegue en desarrollo y producción.
 
+Resumen rápido para desarrollo local:
 ```bash
-# Copiar y editar variables de entorno primero:
 cp .env.example .env
-
-# Arrancar (detecta NAS automáticamente)
-python docker-start.py up -d
-
-# Arrancar y reconstruir imágenes (tras cambios en código)
-python docker-start.py up --build -d
-
-# Apagar (los datos de BD persisten en el volumen sqlserver-data)
-python docker-start.py down
-
-# Ver logs en tiempo real del API
-python docker-start.py logs -f mediaserver-api
-
-# Vigilar NAS y reconectar automáticamente cuando vuelva (en segundo plano)
-python docker-start.py watch &
+python docker-start.py up --build -d   # arranca y reconstruye
+python docker-start.py down            # apagar (BD persiste)
 ```
 
-El script detecta si el NAS (`192.168.1.90:445`) está disponible:
-- **NAS ON** → incluye `docker-compose.nas.yml` automáticamente (monta `/media` desde la NAS)
-- **NAS OFF** → arranca sin montaje de red; API y frontend funcionan con los datos de la BD
-
-**⚠️ Nunca usar `docker-compose down -v`** — borra la base de datos. El script lo bloquea.  
-Para borrar la BD manualmente: `docker volume rm webmultimediaserver_sqlserver-data`
-
-#### Ficheros compose
-| Fichero | Propósito |
-|---|---|
-| `docker-compose.yml` | Base: redes, volúmenes, servicios |
-| `docker-compose.override.yml` | Dev: variables de entorno locales (gitignored) |
-| `docker-compose.nas.yml` | NAS CIFS mount (gitignored, credenciales) |
+**⚠️ Nunca usar `down -v`** — borra la base de datos.
 
 ### Migraciones ⚠️ Requieren aprobación
 ```bash
