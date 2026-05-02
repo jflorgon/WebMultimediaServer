@@ -7,7 +7,7 @@ interface VideoPlayerProps {
   onClose: () => void
 }
 
-export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
+export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState(false)
@@ -23,6 +23,8 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setReady(true)
         video.play().catch(() => {})
+        // Pantalla completa automática al iniciar la reproducción
+        try { video.requestFullscreen?.() } catch { /* no-op */ }
       })
       hls.on(Hls.Events.ERROR, (_e, data) => {
         console.error('[HLS] error:', data.type, data.details, 'fatal:', data.fatal, data)
@@ -40,14 +42,60 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
       video.addEventListener('loadedmetadata', () => {
         setReady(true)
         video.play().catch(() => {})
+        try { video.requestFullscreen?.() } catch { /* no-op */ }
       })
     }
   }, [src])
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    const onKey = (e: KeyboardEvent) => {
+      const video = videoRef.current
+      if (!video) return
+      // Escape / botón Return de Tizen → cerrar
+      if (e.key === 'Escape' || e.keyCode === 10009) {
+        e.preventDefault()
+        e.stopPropagation()
+        onClose()
+        return
+      }
+      // Flecha izq/der → ±10s
+      if (e.key === 'ArrowLeft' || e.keyCode === 37) {
+        e.preventDefault()
+        e.stopPropagation()
+        video.currentTime = Math.max(0, video.currentTime - 10)
+        return
+      }
+      if (e.key === 'ArrowRight' || e.keyCode === 39) {
+        e.preventDefault()
+        e.stopPropagation()
+        video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10)
+        return
+      }
+      // OK / Enter / Espacio → play/pause
+      if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (video.paused) video.play().catch(() => {})
+        else video.pause()
+        return
+      }
+      // Flecha arriba/abajo → ±60s (saltos largos)
+      if (e.key === 'ArrowUp' || e.keyCode === 38) {
+        e.preventDefault()
+        e.stopPropagation()
+        video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 60)
+        return
+      }
+      if (e.key === 'ArrowDown' || e.keyCode === 40) {
+        e.preventDefault()
+        e.stopPropagation()
+        video.currentTime = Math.max(0, video.currentTime - 60)
+        return
+      }
+    }
+    // Captura para interceptar antes que useTizenRemote
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
   }, [onClose])
 
   useEffect(() => {
@@ -65,10 +113,17 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        zIndex: 9999,
         backgroundColor: 'rgba(0,0,0,0.96)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
@@ -103,14 +158,16 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
         </div>
       ) : (
         <>
-          <p style={{ color: '#999', fontSize: 13, marginBottom: 10, opacity: ready ? 1 : 0 }}>{title}</p>
           <video
             ref={videoRef}
             controls
             style={{
-              maxWidth: '92vw',
-              maxHeight: '82vh',
-              borderRadius: 8,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: '#000',
               display: 'block',
               opacity: ready ? 1 : 0,
               transition: 'opacity 0.3s',

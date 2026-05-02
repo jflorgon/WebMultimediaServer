@@ -159,6 +159,17 @@ npm run build
 npm run lint
 ```
 
+### Tizen TV (empaquetar SPA como widget)
+
+Ver **[MediaServerFront/TIZEN.md](MediaServerFront/TIZEN.md)** para instrucciones completas (certificado, sdb, despliegue al TV).
+
+```bash
+cp .env.tizen.example .env.tizen        # ajustar VITE_API_URL con la IP LAN del servidor
+python scripts/build-tizen.py --profile <NombrePerfil>
+```
+
+Genera `dist-tizen/MediaServer-1.0.0-<timestamp>.wgt` listo para `tizen install`.
+
 ### Docker
 
 Ver **[DEPLOYMENT.md](DEPLOYMENT.md)** para instrucciones completas de despliegue en desarrollo y producción.

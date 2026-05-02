@@ -7,6 +7,12 @@
       "skillPath": "skills/dotnet-core-expert/SKILL.md",
       "computedHash": "600a39e427c027d55a9d566651475db063f1ff632f1b1e1ac2e5299940a0affb"
     },
+    "ffmpeg": {
+      "source": "digitalsamba/claude-code-video-toolkit",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ffmpeg/SKILL.md",
+      "computedHash": "453ce416b404291eb9ae04164b68447b3f35d9fb019f924ab5b72c503b2a6dc8"
+    },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",

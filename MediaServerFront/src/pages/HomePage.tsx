@@ -100,7 +100,7 @@ function ContentRow({
               <div
                 key={item.id}
                 ref={(el) => { wrapperRefs.current[index] = el }}
-                style={{ width: 'clamp(160px, 18vw, 260px)' }}
+                style={{ width: '18vw', minWidth: '160px', maxWidth: '260px' }}
               >
                 <MediaCard
                   title={item.title}
@@ -145,14 +145,15 @@ function HeroSection({
   return (
     <div
       className="relative w-full"
-      style={{ height: 'clamp(420px, 62vh, 680px)', marginTop: 'var(--navbar-h)' }}
+      style={{ height: '62vh', minHeight: '420px', maxHeight: '680px', marginTop: 'var(--navbar-h)' }}
     >
       <AnimatePresence mode="sync">
         <motion.img
           key={item.id + '-bg'}
           src={item.backdropUrl ?? item.posterUrl}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-top"
+          className="absolute w-full h-full object-cover object-top"
+          style={{ top: 0, left: 0 }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -160,7 +161,10 @@ function HeroSection({
         />
       </AnimatePresence>
 
-      <div className="absolute inset-0 hero-gradient" />
+      <div
+        className="hero-gradient"
+        style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+      />
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -241,7 +245,7 @@ export function HomePage() {
   const [heroItems, setHeroItems] = useState<HeroItem[]>([])
   const [heroIndex, setHeroIndex] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const heroFetchedRef = useRef(false)
+  const enrichedRef = useRef(false)
 
   useEffect(() => {
     fetchMovies()
@@ -249,63 +253,64 @@ export function HomePage() {
     fetchDocs()
   }, [fetchMovies, fetchSeries, fetchDocs])
 
+  // Fase 1: hero inmediato desde datos de lista (sin esperar API extra)
   useEffect(() => {
-    if (heroFetchedRef.current) return
     if (ml || sl || dl) return
-    if (movies.length === 0 && series.length === 0 && docs.length === 0) return
+    if (heroItems.length > 0) return
 
-    heroFetchedRef.current = true
+    const items: HeroItem[] = [
+      ...movies.slice(0, 4).filter(m => !!m.posterUrl).map(m => ({
+        id: m.id,
+        title: m.title,
+        posterUrl: m.posterUrl,
+        type: 'movie' as const,
+        linkTo: `/movies/${m.id}`,
+      })),
+      ...series.slice(0, 3).filter(s => !!s.posterUrl).map(s => ({
+        id: s.id,
+        title: s.title,
+        posterUrl: s.posterUrl,
+        type: 'series' as const,
+        linkTo: `/series/${s.id}`,
+      })),
+      ...docs.slice(0, 2).filter(d => !!d.posterUrl).map(d => ({
+        id: d.id,
+        title: d.title,
+        posterUrl: d.posterUrl,
+        type: 'documentary' as const,
+        linkTo: `/documentaries/${d.id}`,
+      })),
+    ]
+
+    if (items.length > 0) setHeroItems(items)
+  }, [movies, series, docs, ml, sl, dl, heroItems.length])
+
+  // Fase 2: enriquecer con backdrop + overview desde detalle (en segundo plano)
+  useEffect(() => {
+    if (heroItems.length === 0) return
+    if (enrichedRef.current) return
+    enrichedRef.current = true
 
     const fetches = [
-      ...movies.slice(0, 5).map((m) =>
-        movieService
-          .getById(m.id)
-          .then((d) => ({
-            id: d.id,
-            title: d.title,
-            overview: d.overview,
-            backdropUrl: d.backdropUrl,
-            posterUrl: d.posterUrl,
-            type: 'movie' as const,
-            linkTo: `/movies/${d.id}`,
-          }))
-          .catch(() => null)
+      ...heroItems.filter(h => h.type === 'movie').map(h =>
+        movieService.getById(h.id)
+          .then(d => ({ ...h, backdropUrl: d.backdropUrl ?? h.backdropUrl, overview: d.overview }))
+          .catch(() => h)
       ),
-      ...series.slice(0, 5).map((s) =>
-        seriesService
-          .getById(s.id)
-          .then((d) => ({
-            id: d.id,
-            title: d.title,
-            overview: d.overview,
-            backdropUrl: d.backdropUrl,
-            posterUrl: d.posterUrl,
-            type: 'series' as const,
-            linkTo: `/series/${d.id}`,
-          }))
-          .catch(() => null)
+      ...heroItems.filter(h => h.type === 'series').map(h =>
+        seriesService.getById(h.id)
+          .then(d => ({ ...h, backdropUrl: d.backdropUrl ?? h.backdropUrl, overview: d.overview }))
+          .catch(() => h)
       ),
-      ...docs.slice(0, 2).map((d) =>
-        documentaryService
-          .getById(d.id)
-          .then((r) => ({
-            id: r.id,
-            title: r.title,
-            overview: r.overview,
-            backdropUrl: r.backdropUrl,
-            posterUrl: r.posterUrl,
-            type: 'documentary' as const,
-            linkTo: `/documentaries/${r.id}`,
-          }))
-          .catch(() => null)
+      ...heroItems.filter(h => h.type === 'documentary').map(h =>
+        documentaryService.getById(h.id)
+          .then(d => ({ ...h, backdropUrl: d.backdropUrl ?? h.backdropUrl, overview: d.overview }))
+          .catch(() => h)
       ),
     ]
 
-    Promise.all(fetches).then((results) => {
-      const valid = (results as (HeroItem | null)[]).filter((i): i is HeroItem => i !== null && !!(i?.backdropUrl || i?.posterUrl))
-      setHeroItems(valid)
-    })
-  }, [movies, series, docs, ml, sl, dl])
+    Promise.all(fetches).then(enriched => setHeroItems(enriched as HeroItem[]))
+  }, [heroItems])
 
   const startTimer = useCallback(
     (count: number) => {
@@ -358,7 +363,7 @@ export function HomePage() {
       ) : (
         <div
           className="flex items-center justify-center"
-          style={{ height: 'clamp(420px, 62vh, 680px)', marginTop: 'var(--navbar-h)' }}
+          style={{ height: '62vh', minHeight: '420px', maxHeight: '680px', marginTop: 'var(--navbar-h)' }}
         >
           <Spinner />
         </div>

@@ -9,6 +9,7 @@ volumes:
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
     environment:
       SA_PASSWORD: ${SA_PASSWORD}
       ACCEPT_EULA: "Y"
@@ -40,6 +41,7 @@ services:
     build:
       context: ./Backend
       dockerfile: API/Dockerfile
+    restart: unless-stopped
     ports:
       - "5001:5001"
     environment:
@@ -71,6 +73,7 @@ services:
     build:
       context: ./MediaServerFront
       dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:

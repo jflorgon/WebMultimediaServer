@@ -112,9 +112,10 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
             {
                 FileName = "ffmpeg",
                 // +igndts: ignora DTS corruptos del AVI; -ac 2: fuerza estéreo (AVI 5.1 causa bufferAppendError en HLS.js)
+                // Audio: 256k AAC LC + normalización de loudness EBU R128 para evitar el efecto "radio"
                 Arguments = $"-fflags +genpts+igndts -avoid_negative_ts make_zero -i \"{filePath}\" " +
-                            $"{videoArgs} -c:a aac -ac 2 -ar 48000 -b:a 192k " +
-                            $"-af aresample=async=1000 " +
+                            $"{videoArgs} -c:a aac -profile:a aac_low -ac 2 -ar 48000 -b:a 256k " +
+                            $"-af aresample=async=1000,loudnorm=I=-16:TP=-1.5:LRA=11 " +
                             $"-max_muxing_queue_size 9999 " +
                             $"-hls_time 6 -hls_list_size 0 " +
                             $"-hls_segment_filename \"{segmentPattern}\" -f hls \"{playlistPath}\"",

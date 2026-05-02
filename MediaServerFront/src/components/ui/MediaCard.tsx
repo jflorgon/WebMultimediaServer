@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { formatRating } from '../../utils/formatters'
 
+const isTizen = import.meta.env.VITE_TIZEN === 'true'
+// En TV usamos un zoom mucho menor para que el D-pad no haga "saltos" entre cards.
+// El foco ya tiene su propio outline rojo definido en index.css (.tizen *:focus).
+const FOCUS_SCALE = isTizen ? 1.05 : 1.25
+
 interface MediaCardProps {
   title: string
   year?: number
@@ -30,6 +35,9 @@ export function MediaCard({
   const imageUrl = backdropUrl ?? posterUrl
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // En Tizen el hook useTizenRemote maneja TODA la navegación con D-pad globalmente.
+    // Si MediaCard también responde aquí, ambos handlers mueven el foco → salto doble.
+    if (isTizen) return
     if (e.key === 'ArrowLeft' && onArrowLeft) { e.preventDefault(); onArrowLeft() }
     else if (e.key === 'ArrowRight' && onArrowRight) { e.preventDefault(); onArrowRight() }
   }
@@ -47,7 +55,7 @@ export function MediaCard({
         className="relative overflow-visible rounded-md cursor-pointer"
         onHoverStart={() => setHovered(true)}
         onHoverEnd={() => setHovered(false)}
-        animate={hovered ? { scale: 1.25, zIndex: 50 } : { scale: 1, zIndex: 1 }}
+        animate={hovered ? { scale: FOCUS_SCALE, zIndex: 50 } : { scale: 1, zIndex: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25, delay: hovered ? 0.15 : 0 }}
         style={{ transformOrigin: expandOrigin ?? 'top center' }}
       >

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useDocumentariesStore } from '../store/useDocumentariesStore'
 import { Spinner } from '../components/ui/Spinner'
 import { formatRuntime, formatRating } from '../utils/formatters'
+import { streamUrl } from '../services/streaming'
 
 const VideoPlayer = lazy(() =>
   import('../components/ui/VideoPlayer').then(m => ({ default: m.VideoPlayer }))
@@ -22,7 +23,7 @@ export function DocumentaryDetailPage() {
   if (loading) return <Spinner />
   if (!selected) return <p className="text-gray-400">{t('errors.notFound')}</p>
 
-  const streamSrc = `/api/streaming/documentaries/${selected.id}/playlist.m3u8`
+  const streamSrc = streamUrl(`/api/streaming/documentaries/${selected.id}/playlist.m3u8`)
 
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
@@ -39,7 +40,9 @@ export function DocumentaryDetailPage() {
       <div
         className="relative w-full"
         style={{
-          height: 'clamp(350px, 56vw, 700px)',
+          height: '50vw',
+          minHeight: '350px',
+          maxHeight: '700px',
           backgroundColor: 'var(--netflix-dark)',
         }}
       >
@@ -52,7 +55,10 @@ export function DocumentaryDetailPage() {
         ) : (
           <div className="w-full h-full bg-neutral-900" />
         )}
-        <div className="absolute inset-0 hero-gradient" />
+        <div
+          className="hero-gradient"
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
+        />
 
         <button
           onClick={() => navigate(-1)}
@@ -67,7 +73,8 @@ export function DocumentaryDetailPage() {
         className="relative pb-8"
         style={{
           backgroundColor: 'var(--netflix-black)',
-          marginTop: '-120px',
+          marginTop: '-60px',
+          paddingTop: '2rem',
           zIndex: 10,
           paddingLeft: '4vw',
           paddingRight: '4vw',
@@ -76,12 +83,13 @@ export function DocumentaryDetailPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
-        <div className="flex gap-8">
+        <div className="flex">
           {selected.posterUrl && (
             <img
               src={selected.posterUrl}
               alt={selected.title}
               className="w-36 h-auto rounded-lg flex-shrink-0 shadow-2xl hidden md:block self-start object-contain"
+              style={{ marginRight: '2rem' }}
             />
           )}
           <div className="flex-1">

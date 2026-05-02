@@ -14,3 +14,4 @@ services:
       Scanner__MediaPaths__0: /media/movies
       Scanner__MediaPaths__1: /media/series
       Scanner__MediaPaths__2: /media/documentaries
+      Scanner__IntervalMinutes: "480"

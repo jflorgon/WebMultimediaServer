@@ -21,7 +21,7 @@ export function Navbar() {
   }, [searchOpen])
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `text-sm font-medium transition-colors duration-200 ${
+    `text-lg md:text-xl font-medium transition-colors duration-200 ${
       isActive ? 'text-white' : 'text-gray-300 hover:text-white'
     }`
 
@@ -45,18 +45,18 @@ export function Navbar() {
         MEDIASERVER
       </Link>
 
-      {/* Links centrales */}
-      <div className="hidden md:flex items-center gap-6">
-        <NavLink to="/" end className={linkClass}>{t('nav.home')}</NavLink>
-        <NavLink to="/movies" className={linkClass}>{t('nav.movies')}</NavLink>
-        <NavLink to="/series" className={linkClass}>{t('nav.series')}</NavLink>
+      {/* Links centrales — usamos marginRight en lugar de gap para Tizen TV (Chrome ~69 sin soporte de gap en flex) */}
+      <div className="hidden md:flex items-center">
+        <NavLink to="/" end className={linkClass} style={{ marginRight: '1.5rem' }}>{t('nav.home')}</NavLink>
+        <NavLink to="/movies" className={linkClass} style={{ marginRight: '1.5rem' }}>{t('nav.movies')}</NavLink>
+        <NavLink to="/series" className={linkClass} style={{ marginRight: '1.5rem' }}>{t('nav.series')}</NavLink>
         <NavLink to="/documentaries" className={linkClass}>{t('nav.documentaries')}</NavLink>
       </div>
 
       {/* Acciones derechas */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center">
         {/* Búsqueda expandible */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center" style={{ marginRight: '0.75rem' }}>
           {searchOpen && (
             <input
               ref={searchRef}
@@ -64,6 +64,7 @@ export function Navbar() {
               placeholder={t('search.placeholder')}
               onBlur={() => setSearchOpen(false)}
               className="w-48 px-3 py-1.5 text-sm rounded bg-black/80 border border-white/30 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-all duration-200"
+              style={{ marginRight: '0.5rem' }}
             />
           )}
           <button
@@ -86,6 +87,7 @@ export function Navbar() {
           style={{
             backgroundColor: triggering ? '#555' : 'var(--netflix-red)',
             color: 'white',
+            marginRight: '0.75rem',
           }}
         >
           {triggering ? '⏳ Escaneando...' : '🔄 Escanear'}

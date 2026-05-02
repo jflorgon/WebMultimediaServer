@@ -60,13 +60,13 @@ export function DocumentariesPage() {
           />
 
           {availableGenres.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap">
               <button
                 onClick={() => setGenre(undefined)}
                 className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
                   !genre ? 'text-black border-transparent' : 'text-gray-400 border-gray-600 hover:border-gray-400'
                 }`}
-                style={!genre ? { backgroundColor: 'var(--netflix-red)' } : {}}
+                style={{ marginRight: '0.5rem', marginBottom: '0.5rem', ...(!genre ? { backgroundColor: 'var(--netflix-red)' } : {}) }}
               >
                 {t('search.filters')} (todos)
               </button>
@@ -79,7 +79,7 @@ export function DocumentariesPage() {
                       ? 'text-black border-transparent'
                       : 'text-gray-400 border-gray-600 hover:border-gray-400 hover:text-white'
                   }`}
-                  style={genre === g ? { backgroundColor: 'var(--netflix-red)' } : {}}
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem', ...(genre === g ? { backgroundColor: 'var(--netflix-red)' } : {}) }}
                 >
                   {g}
                 </button>

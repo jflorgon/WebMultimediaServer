@@ -10,7 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-tizen
 *.local
+
+# Tizen build env (contiene IP LAN del servidor)
+.env.tizen
+.env.tizen.local
 
 # Editor directories and files
 .vscode/*
