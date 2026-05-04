@@ -8,4 +8,7 @@ public sealed record DocumentaryListItemDto
     public string? PosterUrl { get; init; }
     public double? Rating { get; init; }
     public List<string> Genres { get; init; } = [];
+    // true = es un doc-serie con episodios → el front debe navegar a /series/{Id}.
+    // false = documental clásico (single file) → /documentaries/{Id}.
+    public bool IsSeries { get; init; }
 }

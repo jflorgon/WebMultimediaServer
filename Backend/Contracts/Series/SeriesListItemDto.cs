@@ -9,4 +9,5 @@ public sealed record SeriesListItemDto
     public double? Rating { get; init; }
     public int Seasons { get; init; }
     public List<string> Genres { get; init; } = [];
+    public string Kind { get; init; } = "Series";
 }

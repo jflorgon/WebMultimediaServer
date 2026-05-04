@@ -31,6 +31,7 @@ public sealed class UpsertSeriesCommandHandler(IApplicationDbContext db)
                 Seasons = request.Seasons,
                 Episodes = request.Episodes,
                 TmdbId = request.TmdbId,
+                Kind = request.Kind,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -53,6 +54,7 @@ public sealed class UpsertSeriesCommandHandler(IApplicationDbContext db)
             existing.Seasons = request.Seasons;
             existing.Episodes = request.Episodes;
             existing.TmdbId = request.TmdbId;
+            existing.Kind = request.Kind;
             existing.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
         }

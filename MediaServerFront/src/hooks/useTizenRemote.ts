@@ -24,6 +24,39 @@ const FOCUSABLE_SELECTOR =
 
 type Direction = 'up' | 'down' | 'left' | 'right'
 
+// Calcula la zona ocupada por elementos pegados al borde superior (navbar fixed
+// + barra sticky de filtros) para que scrollFocusedIntoView no deje el foco
+// debajo de ellos. Tizen 5 (Chromium ~69) ignora `scroll-margin-top`, por eso
+// hacemos el cálculo y el scroll manualmente.
+function getTopOccupied(): number {
+  let occupied = 0
+  const fixedSelectors = ['nav', '[data-tv-fixed-top]', '[data-sticky-top]']
+  for (const sel of fixedSelectors) {
+    const els = document.querySelectorAll<HTMLElement>(sel)
+    for (const el of Array.from(els)) {
+      const cs = getComputedStyle(el)
+      if (cs.position !== 'fixed' && cs.position !== 'sticky') continue
+      const r = el.getBoundingClientRect()
+      // Solo elementos realmente pegados al top (no en mitad de la página)
+      if (r.top <= occupied + 2 && r.bottom > occupied) occupied = r.bottom
+    }
+  }
+  return occupied
+}
+
+function scrollFocusedIntoView(el: HTMLElement) {
+  const r = el.getBoundingClientRect()
+  const topOccupied = getTopOccupied()
+  const margin = 12
+  const viewportH = window.innerHeight
+
+  if (r.top < topOccupied + margin) {
+    window.scrollBy({ top: r.top - topOccupied - margin })
+  } else if (r.bottom > viewportH - margin) {
+    window.scrollBy({ top: r.bottom - viewportH + margin })
+  }
+}
+
 function getFocusable(): HTMLElement[] {
   // Si hay un overlay (modal/reproductor) visible, limitar la búsqueda a su contenido.
   // El overlay del reproductor de vídeo tiene z-index 9999; el de detalle tiene 100.
@@ -52,7 +85,7 @@ function moveFocus(direction: Direction) {
   const current = document.activeElement as HTMLElement | null
   if (!current || current === document.body || !candidates.includes(current)) {
     candidates[0].focus({ preventScroll: true })
-    candidates[0].scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    scrollFocusedIntoView(candidates[0])
     return
   }
 
@@ -125,9 +158,9 @@ function moveFocus(direction: Direction) {
   }
 
   if (best) {
-    // preventScroll evita el doble-scroll (focus + scrollIntoView ambos hacen scroll).
+    // preventScroll evita el doble-scroll (focus + scroll manual).
     best.focus({ preventScroll: true })
-    best.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    scrollFocusedIntoView(best)
   }
 }
 

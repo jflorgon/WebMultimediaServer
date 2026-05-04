@@ -26,6 +26,18 @@
   position: relative;
 }
 
+/* ─── Auto-scroll del D-pad: deja hueco para navbar (fixed) + barra
+       de filtros (sticky) cuando scrollIntoView centra una card al subir.
+       --list-top-offset se sobreescribe en páginas de listado. ───── */
+.tizen {
+  --list-top-offset: var(--navbar-h);
+}
+.tizen a,
+.tizen button {
+  scroll-margin-top: var(--list-top-offset);
+  scroll-margin-bottom: 1rem;
+}
+
 /* ─── Escalado global de tipografía para TV de 55" ───────── */
 /* Subimos el font-size raíz para que TODOS los rem (Tailwind) escalen ~40% */
 html.tizen {

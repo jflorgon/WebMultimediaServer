@@ -28,6 +28,29 @@ public sealed class TmdbClientService(HttpClient httpClient, IOptions<TmdbOption
 
     public async Task<TmdbTvResult?> SearchTvAsync(string title, int? year = null, CancellationToken cancellationToken = default)
     {
+        // Si la primera búsqueda con el título completo falla, vamos truncando
+        // palabras finales — los nombres locales suelen llevar subtítulos en
+        // español que TMDB no indexa (ej. "Cosmos La odisea..." → "Cosmos").
+        var words = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var attempts = new List<string> { title };
+        for (var n = words.Length - 1; n >= 1; n--)
+            attempts.Add(string.Join(' ', words.Take(n)));
+
+        foreach (var attempt in attempts.Distinct())
+        {
+            var result = await SearchTvOnceAsync(attempt, year, cancellationToken);
+            if (result is not null)
+            {
+                if (!string.Equals(attempt, title, StringComparison.Ordinal))
+                    logger.LogInformation("TMDB TV match con título truncado: '{Original}' → '{Trimmed}'", title, attempt);
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private async Task<TmdbTvResult?> SearchTvOnceAsync(string title, int? year, CancellationToken cancellationToken)
+    {
         try
         {
             var yearParam = year.HasValue ? $"&first_air_date_year={year}" : string.Empty;

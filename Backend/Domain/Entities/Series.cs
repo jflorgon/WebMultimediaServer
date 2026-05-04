@@ -15,6 +15,7 @@ public sealed class Series
     public int Seasons { get; set; }
     public int Episodes { get; set; }
     public int? TmdbId { get; set; }
+    public SeriesKind Kind { get; set; } = SeriesKind.Series;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public List<Episode> EpisodeFiles { get; set; } = [];

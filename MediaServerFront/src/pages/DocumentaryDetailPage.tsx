@@ -59,15 +59,15 @@ export function DocumentaryDetailPage() {
           className="hero-gradient"
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
         />
-
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-0 left-0 z-20 px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2"
-          style={{ marginTop: 'var(--navbar-h)' }}
-        >
-          ← Volver
-        </button>
       </div>
+
+      <button
+        onClick={() => navigate(-1)}
+        className="z-30 px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2"
+        style={{ position: 'fixed', top: 'var(--navbar-h)', left: 0, paddingTop: '0.75rem', paddingBottom: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        ← Volver
+      </button>
 
       <motion.div
         className="relative pb-8"

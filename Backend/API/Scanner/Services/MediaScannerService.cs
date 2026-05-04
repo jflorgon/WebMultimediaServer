@@ -5,6 +5,7 @@ using Application.Documentaries.Commands.UpsertDocumentary;
 using Application.Movies.Commands.UpsertMovie;
 using Application.Series.Commands.UpsertEpisode;
 using Application.Series.Commands.UpsertSeries;
+using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -50,7 +51,52 @@ public sealed partial class MediaScannerService(
             if (SeriesFolderKeywords.Contains(mediaPathName))
             {
                 count += await ProcessSeriesRootAsync(
-                    mediaPath, tvGenres, foundSeries, foundEpisodes, cancellationToken);
+                    mediaPath, tvGenres, SeriesKind.Series, foundSeries, foundEpisodes, cancellationToken);
+            }
+            else if (DocumentaryFolderKeywords.Contains(mediaPathName))
+            {
+                // Hijos directos del root de documentaries:
+                //   - directorio  → doc-serie (estructura idéntica a series con T1, T2…)
+                //   - fichero     → documental clásico (single file)
+                var subdirs = Directory.EnumerateDirectories(mediaPath).ToList();
+                if (subdirs.Count > 0)
+                {
+                    foreach (var subdir in subdirs)
+                    {
+                        if (cancellationToken.IsCancellationRequested) break;
+                        try
+                        {
+                            count += await ProcessSeriesFolderAsync(
+                                subdir, tvGenres, SeriesKind.Documentary, foundSeries, foundEpisodes, cancellationToken);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error procesando carpeta de doc-serie: {Folder}", subdir);
+                        }
+                    }
+                }
+
+                var topLevelFiles = Directory.EnumerateFiles(mediaPath)
+                    .Where(f => options.Value.VideoExtensions.Contains(
+                        Path.GetExtension(f).ToLowerInvariant()))
+                    .ToList();
+
+                logger.LogInformation("{Count} documentales (single file) encontrados en {Path}", topLevelFiles.Count, mediaPath);
+
+                foreach (var file in topLevelFiles)
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
+                    try
+                    {
+                        var fileType = await ProcessFileAsync(file, mediaPathName, movieGenres, cancellationToken);
+                        if (fileType == "documentary") foundDocumentaries.Add(file);
+                        count++;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error procesando fichero: {File}", file);
+                    }
+                }
             }
             else
             {
@@ -93,6 +139,7 @@ public sealed partial class MediaScannerService(
     private async Task<int> ProcessSeriesRootAsync(
         string seriesRoot,
         List<TmdbGenre> tvGenres,
+        SeriesKind kind,
         HashSet<string> foundSeries,
         HashSet<string> foundEpisodes,
         CancellationToken cancellationToken)
@@ -107,7 +154,7 @@ public sealed partial class MediaScannerService(
             try
             {
                 count += await ProcessSeriesFolderAsync(
-                    seriesFolder, tvGenres, foundSeries, foundEpisodes, cancellationToken);
+                    seriesFolder, tvGenres, kind, foundSeries, foundEpisodes, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -121,6 +168,7 @@ public sealed partial class MediaScannerService(
     private async Task<int> ProcessSeriesFolderAsync(
         string seriesFolder,
         List<TmdbGenre> tvGenres,
+        SeriesKind kind,
         HashSet<string> foundSeries,
         HashSet<string> foundEpisodes,
         CancellationToken cancellationToken)
@@ -132,7 +180,10 @@ public sealed partial class MediaScannerService(
         logger.LogDebug("Procesando serie: '{Title}' en {Folder}", cleanTitle, seriesFolder);
 
         var existing = await db.Series.FirstOrDefaultAsync(s => s.FilePath == seriesFolder, cancellationToken);
-        var shouldSearchTmdb = existing is null || (DateTime.UtcNow - existing.UpdatedAt).TotalDays >= DaysBeforeRefresh;
+        var shouldSearchTmdb = existing is null
+            || existing.PosterUrl is null
+            || existing.TmdbId is null
+            || (DateTime.UtcNow - existing.UpdatedAt).TotalDays >= DaysBeforeRefresh;
 
         TmdbTvResult? result = null;
         if (shouldSearchTmdb)
@@ -161,7 +212,8 @@ public sealed partial class MediaScannerService(
             Rating: result?.VoteAverage > 0 ? result.VoteAverage : null,
             Seasons: result?.NumberOfSeasons ?? 1,
             Episodes: result?.NumberOfEpisodes ?? 1,
-            TmdbId: result?.Id
+            TmdbId: result?.Id,
+            Kind: kind
         ), cancellationToken);
 
         foundSeries.Add(seriesFolder);
@@ -304,7 +356,10 @@ public sealed partial class MediaScannerService(
         if (DocumentaryFolderKeywords.Contains(mediaPathName))
         {
             var existingDoc = await db.Documentaries.FirstOrDefaultAsync(d => d.FilePath == filePath, cancellationToken);
-            var shouldSearchTmdb = existingDoc is null || (DateTime.UtcNow - existingDoc.UpdatedAt).TotalDays >= DaysBeforeRefresh;
+            var shouldSearchTmdb = existingDoc is null
+                || existingDoc.PosterUrl is null
+                || existingDoc.TmdbId is null
+                || (DateTime.UtcNow - existingDoc.UpdatedAt).TotalDays >= DaysBeforeRefresh;
 
             TmdbMovieResult? result = null;
             if (shouldSearchTmdb)
@@ -347,7 +402,10 @@ public sealed partial class MediaScannerService(
         else
         {
             var existingMovie = await db.Movies.FirstOrDefaultAsync(m => m.FilePath == filePath, cancellationToken);
-            var shouldSearchTmdb = existingMovie is null || (DateTime.UtcNow - existingMovie.UpdatedAt).TotalDays >= DaysBeforeRefresh;
+            var shouldSearchTmdb = existingMovie is null
+                || existingMovie.PosterUrl is null
+                || existingMovie.TmdbId is null
+                || (DateTime.UtcNow - existingMovie.UpdatedAt).TotalDays >= DaysBeforeRefresh;
 
             TmdbMovieResult? result = null;
             if (shouldSearchTmdb)

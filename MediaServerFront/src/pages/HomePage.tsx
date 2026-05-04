@@ -13,6 +13,7 @@ import { movieService } from '../services/movieService'
 import { seriesService } from '../services/seriesService'
 import { documentaryService } from '../services/documentaryService'
 import type { SeriesListItem } from '../types/series'
+import type { DocumentaryListItem } from '../types/documentary'
 
 type HeroItem = {
   id: string
@@ -39,11 +40,13 @@ function ContentRow({
   items,
   linkBase,
   subtitleFn,
+  linkToFn,
 }: {
   title: string
   items: RowItem[]
   linkBase: string
   subtitleFn?: (item: RowItem) => string | undefined
+  linkToFn?: (item: RowItem) => string
 }) {
   const { t } = useTranslation()
   const carouselRef = useRef<HTMLDivElement>(null)
@@ -109,7 +112,7 @@ function ContentRow({
                   backdropUrl={item.backdropUrl}
                   rating={item.rating}
                   genres={item.genres}
-                  linkTo={`/${linkBase}/${item.id}`}
+                  linkTo={linkToFn ? linkToFn(item) : `/${linkBase}/${item.id}`}
                   subtitle={subtitleFn?.(item)}
                   expandOrigin={index === 0 ? 'top left' : 'top center'}
                   onArrowLeft={() => focusCard(index - 1)}
@@ -278,7 +281,7 @@ export function HomePage() {
         title: d.title,
         posterUrl: d.posterUrl,
         type: 'documentary' as const,
-        linkTo: `/documentaries/${d.id}`,
+        linkTo: d.isSeries ? `/series/${d.id}` : `/documentaries/${d.id}`,
       })),
     ]
 
@@ -398,6 +401,7 @@ export function HomePage() {
             title={t('home.recentDocumentaries')}
             items={docs}
             linkBase="documentaries"
+            linkToFn={(item) => (item as DocumentaryListItem).isSeries ? `/series/${item.id}` : `/documentaries/${item.id}`}
           />
         )}
       </div>

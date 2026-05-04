@@ -22,4 +22,6 @@ export interface DocumentaryListItem {
   posterUrl?: string
   rating?: number
   genres: string[]
+  // true → es un doc-serie con episodios; navegar a /series/{id} en su detalle
+  isSeries: boolean
 }

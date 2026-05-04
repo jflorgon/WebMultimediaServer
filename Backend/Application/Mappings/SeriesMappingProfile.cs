@@ -10,8 +10,10 @@ public sealed class SeriesMappingProfile : Profile
     public SeriesMappingProfile()
     {
         CreateMap<SeriesEntity, SeriesDto>()
-            .ForMember(d => d.EpisodeFiles, o => o.MapFrom(s => s.EpisodeFiles));
-        CreateMap<SeriesEntity, SeriesListItemDto>();
+            .ForMember(d => d.EpisodeFiles, o => o.MapFrom(s => s.EpisodeFiles))
+            .ForMember(d => d.Kind, o => o.MapFrom(s => s.Kind.ToString()));
+        CreateMap<SeriesEntity, SeriesListItemDto>()
+            .ForMember(d => d.Kind, o => o.MapFrom(s => s.Kind.ToString()));
         CreateMap<EpisodeEntity, EpisodeListItemDto>();
     }
 }

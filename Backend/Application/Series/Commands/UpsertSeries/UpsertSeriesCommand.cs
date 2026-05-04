@@ -1,3 +1,4 @@
+using Domain.Entities;
 using MediatR;
 
 namespace Application.Series.Commands.UpsertSeries;
@@ -14,4 +15,5 @@ public sealed record UpsertSeriesCommand(
     double? Rating,
     int Seasons,
     int Episodes,
-    int? TmdbId) : IRequest<Guid>;
+    int? TmdbId,
+    SeriesKind Kind = SeriesKind.Series) : IRequest<Guid>;

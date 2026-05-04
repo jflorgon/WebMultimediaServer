@@ -3,6 +3,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Contracts.Series;
 using Core.Pagination;
+using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,8 @@ public sealed class GetSeriesQueryHandler(IApplicationDbContext db, IMapper mapp
 {
     public async Task<PagedResult<SeriesListItemDto>> Handle(GetSeriesQuery request, CancellationToken cancellationToken)
     {
-        var query = db.Series.AsNoTracking().AsQueryable();
+        // Las series con Kind=Documentary se listan en /api/documentaries, no aquí.
+        var query = db.Series.AsNoTracking().Where(s => s.Kind == SeriesKind.Series);
 
         if (!string.IsNullOrWhiteSpace(request.Title))
             query = query.Where(s => s.Title.ToLower().Contains(request.Title.ToLower()));

@@ -15,6 +15,7 @@ public sealed record SeriesDto
     public int Seasons { get; init; }
     public int Episodes { get; init; }
     public int? TmdbId { get; init; }
+    public string Kind { get; init; } = "Series";
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
     public IReadOnlyList<EpisodeListItemDto> EpisodeFiles { get; init; } = [];

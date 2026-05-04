@@ -128,6 +128,8 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         try
         {
             process.Start();
+            // Drena stderr continuamente para que FFmpeg no bloquee cuando el pipe buffer se llena
+            _ = process.StandardError.BaseStream.CopyToAsync(Stream.Null);
             _logger.LogInformation("FFmpeg HLS iniciado para {Id}: {FilePath}", id, filePath);
             await process.WaitForExitAsync();
             _logger.LogInformation("FFmpeg HLS finalizado para {Id}, código: {Code}", id, process.ExitCode);
