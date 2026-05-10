@@ -18,9 +18,8 @@
 /* ─── Foco visible para mando D-pad de TV (solo en modo Tizen) ── */
 .tizen *:focus,
 .tizen *:focus-visible {
-  outline: 4px solid #fff;
-  outline-offset: 4px;
-  box-shadow: 0 0 0 8px var(--netflix-red), 0 0 24px 12px rgba(229, 9, 20, 0.6);
+  outline: 3px solid #C04545;
+  outline-offset: 2px;
   border-radius: 6px;
   z-index: 50;
   position: relative;
@@ -58,6 +57,11 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* ─── En Tizen TV ocultamos completamente la scrollbar ──── */
+html.tizen { scrollbar-width: none; }
+html.tizen::-webkit-scrollbar,
+html.tizen *::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 /* ─── Sección de contenido: sube z-index al hacer hover para que las
        cards ampliadas no queden debajo de la sección siguiente ─────── */

@@ -4,9 +4,7 @@ import { useState } from 'react'
 import { formatRating } from '../../utils/formatters'
 
 const isTizen = import.meta.env.VITE_TIZEN === 'true'
-// En TV usamos un zoom mucho menor para que el D-pad no haga "saltos" entre cards.
-// El foco ya tiene su propio outline rojo definido en index.css (.tizen *:focus).
-const FOCUS_SCALE = isTizen ? 1.05 : 1.25
+const FOCUS_SCALE = isTizen ? 1.12 : 1.25
 
 interface MediaCardProps {
   title: string
@@ -81,6 +79,21 @@ export function MediaCard({
               ★ {formatRating(rating)}
             </span>
           )}
+
+          {/* Anillo de foco Tizen: dentro del contenedor, visible en los 4 lados */}
+          {isTizen && hovered && (
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                border: '4px solid #C04545',
+                borderRadius: '6px',
+                zIndex: 10,
+                pointerEvents: 'none',
+              }}
+            />
+          )}
         </div>
 
         {/* Overlay hover — aparece debajo de la imagen */}
@@ -91,11 +104,11 @@ export function MediaCard({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute left-0 right-0 top-full rounded-b-md px-3 py-2 z-10"
+              className={`absolute left-0 right-0 top-full rounded-b-md z-10 ${isTizen ? 'px-4 py-3 pb-4' : 'px-3 py-2'}`}
               style={{ backgroundColor: 'var(--netflix-gray)' }}
             >
-              <p className="text-white text-sm font-semibold leading-snug truncate">{title}</p>
-              <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+              <p className={`text-white font-semibold leading-snug truncate ${isTizen ? 'text-base' : 'text-sm'}`}>{title}</p>
+              <div className={`flex items-center gap-2 mt-1 text-gray-400 ${isTizen ? 'text-sm' : 'text-xs'}`}>
                 {year && <span className="text-green-400 font-medium">{year}</span>}
                 {rating != null && (
                   <span className="text-yellow-400">★ {formatRating(rating)}</span>
@@ -104,14 +117,14 @@ export function MediaCard({
               {genres && genres.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {genres.slice(0, 3).map((g) => (
-                    <span key={g} className="text-[10px] text-gray-400 border border-gray-600 rounded px-1.5 py-0.5">
+                    <span key={g} className={`text-gray-400 border border-gray-600 rounded px-1.5 py-0.5 ${isTizen ? 'text-xs' : 'text-[10px]'}`}>
                       {g}
                     </span>
                   ))}
                 </div>
               )}
               {subtitle && (
-                <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+                <p className={`text-gray-500 mt-1 ${isTizen ? 'text-sm' : 'text-xs'}`}>{subtitle}</p>
               )}
             </motion.div>
           )}

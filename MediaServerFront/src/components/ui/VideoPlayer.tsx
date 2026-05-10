@@ -103,13 +103,6 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const toggleFullscreen = () => {
-    const video = videoRef.current
-    if (!video) return
-    if (document.fullscreenElement) document.exitFullscreen()
-    else video.requestFullscreen()
-  }
-
   return (
     <div
       style={{
@@ -127,23 +120,6 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 12, zIndex: 1 }}>
-        <button
-          onClick={toggleFullscreen}
-          title="Pantalla completa"
-          style={{ color: 'white', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 18 }}
-        >
-          ⛶
-        </button>
-        <button
-          onClick={onClose}
-          title="Cerrar"
-          style={{ color: 'white', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 6, padding: '6px 10px', cursor: 'pointer', fontSize: 18 }}
-        >
-          ✕
-        </button>
-      </div>
-
       {!ready && !error && (
         <div style={{ position: 'absolute', color: '#ccc', fontSize: 14, textAlign: 'center' }}>
           <div style={{ marginBottom: 8 }}>Preparando stream…</div>

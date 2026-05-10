@@ -64,7 +64,7 @@ export function MoviesPage() {
       </div>
 
       <div data-sticky-top style={{ position: 'sticky', top: 'var(--navbar-h)', zIndex: 20, backgroundColor: 'var(--netflix-black)', paddingTop: '0.75rem', paddingBottom: '0.75rem', paddingLeft: '4vw', paddingRight: '4vw' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <SearchInputTV
             value={inputTitle}
             onChange={setInputTitle}
@@ -76,7 +76,7 @@ export function MoviesPage() {
             <div className="flex flex-wrap">
               <button
                 onClick={() => setGenre(undefined)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                   !genre ? 'text-black border-transparent' : 'text-gray-400 border-gray-600 hover:border-gray-400'
                 }`}
                 style={{ marginRight: '0.5rem', marginBottom: '0.25rem', ...(!genre ? { backgroundColor: 'var(--netflix-red)' } : {}) }}
@@ -87,7 +87,7 @@ export function MoviesPage() {
                 <button
                   key={g}
                   onClick={() => setGenre(genre === g ? undefined : g)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                     genre === g
                       ? 'text-black border-transparent'
                       : 'text-gray-400 border-gray-600 hover:border-gray-400 hover:text-white'
