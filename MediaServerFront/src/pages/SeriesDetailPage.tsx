@@ -9,6 +9,8 @@ import { seriesService } from '../services/seriesService'
 import { streamUrl } from '../services/streaming'
 import type { EpisodeListItem } from '../types/series'
 
+const isTizen = import.meta.env.VITE_TIZEN === 'true'
+
 const VideoPlayer = lazy(() =>
   import('../components/ui/VideoPlayer').then(m => ({ default: m.VideoPlayer }))
 )
@@ -52,6 +54,29 @@ export function SeriesDetailPage() {
         </Suspense>
       )}
 
+      {!isTizen && (
+        <div
+          data-tv-fixed-top
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 30,
+            paddingLeft: '4vw',
+            paddingTop: '0.75rem',
+            paddingBottom: '0.75rem',
+            background: 'linear-gradient(to bottom, rgba(20,20,20,0.92) 0%, rgba(20,20,20,0) 100%)',
+          }}
+        >
+          <button
+            onClick={() => navigate(-1)}
+            className="text-white hover:text-gray-300 transition-colors inline-flex items-center gap-2"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
+          >
+            ← {t('common.back', 'Volver')}
+          </button>
+        </div>
+      )}
+
       <div
         className="relative w-full"
         style={{
@@ -75,14 +100,6 @@ export function SeriesDetailPage() {
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
         />
       </div>
-
-      <button
-        onClick={() => navigate(-1)}
-        className="z-30 px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2"
-        style={{ position: 'fixed', top: 'var(--navbar-h)', left: 0, paddingTop: '0.75rem', paddingBottom: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
-      >
-        ← Volver
-      </button>
 
       <motion.div
         className="relative pb-8"
@@ -145,7 +162,11 @@ export function SeriesDetailPage() {
             )}
 
             {selected.overview && (
-              <p className="text-gray-300 leading-relaxed text-base max-w-2xl">
+              <p
+                tabIndex={0}
+                className="text-gray-300 leading-relaxed text-base max-w-2xl"
+                style={{ padding: '0.5rem 0', borderRadius: 6 }}
+              >
                 {selected.overview}
               </p>
             )}
@@ -157,16 +178,13 @@ export function SeriesDetailPage() {
         <div className="py-12" style={{ paddingLeft: '4vw', paddingRight: '4vw' }}>
           <h2 className="text-2xl font-black text-white mb-6">{t('detail.episodes')}</h2>
 
-          <div className="flex gap-4 border-b border-gray-700 mb-6 overflow-x-auto">
-            {seasonNumbers.map((season) => (
+          <div className="flex border-b border-gray-700 mb-6 overflow-x-auto">
+            {seasonNumbers.map((season, idx) => (
               <button
                 key={season}
                 onClick={() => setActiveSeason(season)}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
-                  currentSeason === season
-                    ? 'text-white border-white'
-                    : 'text-gray-400 border-transparent hover:text-gray-200'
-                }`}
+                className={`season-tab ${currentSeason === season ? 'season-tab--active' : ''}`}
+                style={idx < seasonNumbers.length - 1 ? { marginRight: '1.5rem' } : undefined}
               >
                 {t('detail.seasons')} {season}
               </button>
@@ -178,32 +196,17 @@ export function SeriesDetailPage() {
               {seasonMap[currentSeason!]
                 .sort((a, b) => a.episodeNumber - b.episodeNumber)
                 .map((ep) => (
-                  <li
-                    key={ep.id}
-                    className="flex gap-4 p-4 rounded hover:bg-gray-900 transition-colors items-center"
-                  >
-                    <span className="text-4xl font-black text-gray-700 w-16 flex-shrink-0 text-right">
-                      {String(ep.episodeNumber).padStart(2, '0')}
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-white font-medium">{ep.title}</p>
-                    </div>
+                  <li key={ep.id}>
                     <button
                       onClick={() => setPlayingEpisodeId(ep.id)}
-                      title="Reproducir episodio"
-                      style={{
-                        backgroundColor: '#e50914',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: 6,
-                        padding: '6px 14px',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
+                      title={t('detail.play', 'Reproducir episodio')}
+                      className="episode-row"
                     >
-                      ▶
+                      <span className="episode-row__num">
+                        {String(ep.episodeNumber).padStart(2, '0')}
+                      </span>
+                      <span className="episode-row__title">{ep.title}</span>
+                      <span className="episode-row__play" aria-hidden>▶</span>
                     </button>
                   </li>
                 ))}

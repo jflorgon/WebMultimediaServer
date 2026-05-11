@@ -15,14 +15,38 @@
 /* ─── Reset base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ─── Foco visible para mando D-pad de TV (solo en modo Tizen) ── */
+/* ─── Foco visible para mando D-pad de TV (solo en modo Tizen) ──
+   Anillo rojo nítido + halo que se degrada hacia afuera. Usamos box-shadow
+   en lugar de outline para respetar el border-radius del elemento (chips
+   pill, cards, etc. mantienen su forma original). */
 .tizen *:focus,
 .tizen *:focus-visible {
-  outline: 3px solid #C04545;
-  outline-offset: 2px;
-  border-radius: 6px;
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(229, 9, 20, 1),
+    0 0 12px 2px rgba(229, 9, 20, 0.55),
+    0 0 26px 6px rgba(229, 9, 20, 0.22);
   z-index: 50;
   position: relative;
+}
+/* Para elementos del navbar (links + botones sin padding propio) damos un
+   pequeño padding y border-radius de base, así el halo rojo se ve redondeado
+   y no pegado al texto. No usamos :where() porque Tizen Chromium 63-69 no lo
+   soporta (es de Chrome 88+). Excluimos botones que ya traen `px-` de Tailwind
+   (ej. Escanear). */
+.tizen nav a,
+.tizen nav button:not([class*="px-"]) {
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+
+/* MediaCard: el halo de foco lo pinta el propio componente sobre el motion.div
+   (que escala 1.12x), no sobre el <a>. Suprimimos el halo global aquí para
+   evitar doble indicador y el efecto de "halo sólo arriba" (el <a> queda en
+   el tamaño original mientras el contenido escala). */
+.tizen .media-card-link:focus,
+.tizen .media-card-link:focus-visible {
+  box-shadow: none;
 }
 
 /* ─── Auto-scroll del D-pad: deja hueco para navbar (fixed) + barra
@@ -81,6 +105,11 @@ html.tizen *::-webkit-scrollbar { display: none; width: 0; height: 0; }
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* padding-y + margin-y negativo: amplía el área visible interna para que el
+     halo de foco (box-shadow) y el overlay de hover no se recorten por el
+     `overflow-x: auto` (CSS spec acopla overflow-y a auto/clip). */
+  padding-top: 36px;
+  margin-top: -36px;
   padding-bottom: 220px;
   margin-bottom: -220px;
 }
@@ -108,4 +137,82 @@ html.tizen *::-webkit-scrollbar { display: none; width: 0; height: 0; }
     rgba(20,20,20,0.4) 30%,
     transparent        70%
   );
+}
+
+/* ─── Filtros (chips): padding propio que sustituye al `px-4 py-1.5` de Tailwind
+       (mismo valor en Tizen y en navegador) ─────────────────────── */
+[data-filter-chip] {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+/* ─── Tabs de temporada (detalle de serie) ──────────────── */
+.season-tab {
+  padding: 0.75rem 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 150ms, background-color 150ms;
+}
+.season-tab--active { color: #fff; border-bottom-color: #fff; }
+.season-tab:hover { color: #e5e7eb; }
+.tizen .season-tab { padding: 0.85rem 1.5rem; font-size: 1rem; }
+.tizen .season-tab:focus,
+.tizen .season-tab:focus-visible {
+  background-color: rgba(255,255,255,0.12);
+  color: #fff;
+  border-radius: 8px 8px 0 0;
+}
+
+/* ─── Fila de episodio (toda la fila es focusable) ──────── */
+/* Usamos margin-right en lugar de flex `gap` porque Tizen 5/6 (Chromium 63-69)
+   no soporta `gap` en flex (sólo a partir de Chrome 84 / Tizen 6.5). */
+.episode-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.episode-row:hover { background-color: rgba(255,255,255,0.06); }
+.episode-row__num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #6b7280;
+  width: 3.5rem;
+  flex-shrink: 0;
+  text-align: right;
+  line-height: 1;
+  margin-right: 1.5rem;
+}
+.episode-row__title {
+  flex: 1;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.3;
+  margin-right: 1rem;
+}
+.episode-row__play {
+  flex-shrink: 0;
+  color: #e50914;
+  font-size: 1.25rem;
+}
+.tizen .episode-row { padding: 1rem 1.25rem; }
+.tizen .episode-row__num { font-size: 1.85rem; width: 3.25rem; margin-right: 2rem; }
+.tizen .episode-row__title { font-size: 1.15rem; margin-right: 1.5rem; }
+.tizen .episode-row:focus,
+.tizen .episode-row:focus-visible {
+  background-color: rgba(229,9,20,0.18);
 }

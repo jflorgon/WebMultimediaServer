@@ -8,4 +8,7 @@ export const movieService = {
 
   getById: (id: string) =>
     api.get<Movie>(`/movies/${id}`).then((r) => r.data),
+
+  getGenres: () =>
+    api.get<string[]>('/movies/genres').then((r) => r.data),
 }

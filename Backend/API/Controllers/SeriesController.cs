@@ -1,6 +1,7 @@
 using Application.Series.Queries.GetEpisodesBySeries;
 using Application.Series.Queries.GetSeries;
 using Application.Series.Queries.GetSeriesById;
+using Application.Series.Queries.GetSeriesGenres;
 using Contracts.Common;
 using Contracts.Series;
 using Core.Pagination;
@@ -37,6 +38,13 @@ public sealed class SeriesController(IMediator mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetEpisodesBySeriesQuery(id), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("genres")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetGenres(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetSeriesGenresQuery(), cancellationToken);
         return Ok(result);
     }
 }

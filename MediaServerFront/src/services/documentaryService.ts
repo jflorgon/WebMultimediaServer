@@ -8,4 +8,7 @@ export const documentaryService = {
 
   getById: (id: string) =>
     api.get<Documentary>(`/documentaries/${id}`).then((r) => r.data),
+
+  getGenres: () =>
+    api.get<string[]>('/documentaries/genres').then((r) => r.data),
 }

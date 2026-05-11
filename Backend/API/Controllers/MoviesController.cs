@@ -1,4 +1,5 @@
 using Application.Movies.Queries.GetMovieById;
+using Application.Movies.Queries.GetMovieGenres;
 using Application.Movies.Queries.GetMovies;
 using Contracts.Common;
 using Contracts.Movies;
@@ -28,5 +29,12 @@ public sealed class MoviesController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new GetMovieByIdQuery(id), cancellationToken);
         return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpGet("genres")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetGenres(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetMovieGenresQuery(), cancellationToken);
+        return Ok(result);
     }
 }

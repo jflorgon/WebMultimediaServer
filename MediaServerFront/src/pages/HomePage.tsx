@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useAutoRetry } from '../hooks/useAutoRetry'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -193,19 +194,13 @@ function HeroSection({
               {item.overview}
             </p>
           )}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <Link
               to={item.linkTo}
-              className="flex items-center gap-2 px-6 py-2.5 rounded font-bold text-sm text-black transition-opacity hover:opacity-80"
-              style={{ backgroundColor: 'white' }}
+              className="inline-flex items-center rounded font-bold text-sm text-black transition-opacity hover:opacity-80"
+              style={{ backgroundColor: 'white', padding: '0.3rem 0.7rem', fontSize: '0.85rem' }}
             >
-              <span>▶</span> Reproducir
-            </Link>
-            <Link
-              to={item.linkTo}
-              className="flex items-center gap-2 px-6 py-2.5 rounded font-bold text-sm text-white bg-white/20 hover:bg-white/30 transition-colors"
-            >
-              <span>ℹ</span> Más info
+              <span style={{ marginRight: '0.4rem' }}>▶</span> Reproducir
             </Link>
           </div>
         </motion.div>
@@ -255,6 +250,12 @@ export function HomePage() {
     fetchSeries()
     fetchDocs()
   }, [fetchMovies, fetchSeries, fetchDocs])
+
+  // Auto-retry si el servidor está caído: reintenta cada 10s hasta 15 veces
+  // mientras el store siga vacío. Se resetea al cargar con éxito.
+  useAutoRetry(movies.length === 0, ml, fetchMovies)
+  useAutoRetry(series.length === 0, sl, fetchSeries)
+  useAutoRetry(docs.length === 0, dl, fetchDocs)
 
   // Fase 1: hero inmediato desde datos de lista (sin esperar API extra)
   useEffect(() => {

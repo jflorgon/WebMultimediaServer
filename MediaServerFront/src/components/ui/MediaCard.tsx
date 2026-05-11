@@ -44,7 +44,7 @@ export function MediaCard({
     <Link
       to={linkTo}
       state={{ backgroundLocation: location }}
-      className="block outline-none rounded-md"
+      className="media-card-link block outline-none rounded-md"
       onFocus={() => setHovered(true)}
       onBlur={() => setHovered(false)}
       onKeyDown={handleKeyDown}
@@ -55,7 +55,13 @@ export function MediaCard({
         onHoverEnd={() => setHovered(false)}
         animate={hovered ? { scale: FOCUS_SCALE, zIndex: 50 } : { scale: 1, zIndex: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25, delay: hovered ? 0.15 : 0 }}
-        style={{ transformOrigin: expandOrigin ?? 'top center' }}
+        style={{
+          transformOrigin: expandOrigin ?? 'top center',
+          boxShadow:
+            isTizen && hovered
+              ? '0 0 0 3px rgba(229, 9, 20, 1), 0 0 14px 2px rgba(229, 9, 20, 0.55), 0 0 28px 6px rgba(229, 9, 20, 0.22)'
+              : undefined,
+        }}
       >
         {/* Imagen: 16:9 con backdrop, 2:3 con poster solo */}
         <div className={`relative overflow-hidden rounded-md bg-neutral-800 ${useBackdrop ? 'aspect-video' : 'aspect-[2/3]'}`}>
@@ -80,20 +86,6 @@ export function MediaCard({
             </span>
           )}
 
-          {/* Anillo de foco Tizen: dentro del contenedor, visible en los 4 lados */}
-          {isTizen && hovered && (
-            <div
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                border: '4px solid #C04545',
-                borderRadius: '6px',
-                zIndex: 10,
-                pointerEvents: 'none',
-              }}
-            />
-          )}
         </div>
 
         {/* Overlay hover — aparece debajo de la imagen */}
@@ -104,20 +96,32 @@ export function MediaCard({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className={`absolute left-0 right-0 top-full rounded-b-md z-10 ${isTizen ? 'px-4 py-3 pb-4' : 'px-3 py-2'}`}
-              style={{ backgroundColor: 'var(--netflix-gray)' }}
+              className="absolute left-0 right-0 top-full rounded-b-md z-10"
+              style={{
+                backgroundColor: 'var(--netflix-gray)',
+                padding: '0.3rem 0.45rem 0.35rem',
+                boxShadow: isTizen
+                  ? '0 0 0 3px rgba(229, 9, 20, 1), 0 0 14px 2px rgba(229, 9, 20, 0.55), 0 0 28px 6px rgba(229, 9, 20, 0.22)'
+                  : undefined,
+              }}
             >
-              <p className={`text-white font-semibold leading-snug truncate ${isTizen ? 'text-base' : 'text-sm'}`}>{title}</p>
-              <div className={`flex items-center gap-2 mt-1 text-gray-400 ${isTizen ? 'text-sm' : 'text-xs'}`}>
-                {year && <span className="text-green-400 font-medium">{year}</span>}
+              <p className={`text-white font-semibold leading-snug truncate text-center ${isTizen ? 'text-base' : 'text-sm'}`}>{title}</p>
+              <div className={`flex items-center mt-1 text-gray-400 ${isTizen ? 'text-sm' : 'text-xs'}`}>
+                {year && (
+                  <span className="text-green-400 font-medium" style={{ marginRight: rating != null ? '0.6rem' : 0 }}>{year}</span>
+                )}
                 {rating != null && (
                   <span className="text-yellow-400">★ {formatRating(rating)}</span>
                 )}
               </div>
               {genres && genres.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                  {genres.slice(0, 3).map((g) => (
-                    <span key={g} className={`text-gray-400 border border-gray-600 rounded px-1.5 py-0.5 ${isTizen ? 'text-xs' : 'text-[10px]'}`}>
+                <div className="flex flex-wrap mt-2">
+                  {genres.slice(0, 3).map((g, i, arr) => (
+                    <span
+                      key={g}
+                      className={`text-gray-400 border border-gray-600 rounded px-1.5 py-0.5 ${isTizen ? 'text-xs' : 'text-[10px]'}`}
+                      style={{ marginRight: i < arr.length - 1 ? '0.4rem' : 0, marginBottom: '0.25rem' }}
+                    >
                       {g}
                     </span>
                   ))}

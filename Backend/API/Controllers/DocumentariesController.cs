@@ -1,5 +1,6 @@
 using Application.Documentaries.Queries.GetDocumentaries;
 using Application.Documentaries.Queries.GetDocumentaryById;
+using Application.Documentaries.Queries.GetDocumentaryGenres;
 using Contracts.Common;
 using Contracts.Documentaries;
 using Core.Pagination;
@@ -28,5 +29,12 @@ public sealed class DocumentariesController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new GetDocumentaryByIdQuery(id), cancellationToken);
         return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpGet("genres")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetGenres(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetDocumentaryGenresQuery(), cancellationToken);
+        return Ok(result);
     }
 }

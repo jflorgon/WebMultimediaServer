@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSeriesStore } from '../store/useSeriesStore'
+import { useAutoRetry } from '../hooks/useAutoRetry'
 import { useScrollRestoration } from '../hooks/useScrollRestoration'
 import { MediaCard } from '../components/ui/MediaCard'
 import { Spinner } from '../components/ui/Spinner'
@@ -11,7 +12,7 @@ const SCROLL_KEY = 'series-scroll-y'
 
 export function SeriesPage() {
   const { t } = useTranslation()
-  const { items, totalCount, loading, title, genre, fetchAll, appendItems, setTitle, setGenre } = useSeriesStore()
+  const { items, totalCount, loading, title, genre, allGenres, fetchAll, appendItems, fetchGenres, setTitle, setGenre } = useSeriesStore()
 
   const [inputTitle, setInputTitle] = useState(title)
   const isInitialMount = useRef(true)
@@ -44,12 +45,13 @@ export function SeriesPage() {
     fetchAll()
   }, [title, genre, fetchAll]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const hasMore = items.length < totalCount
+  useEffect(() => {
+    if (allGenres.length === 0) fetchGenres()
+  }, [allGenres.length, fetchGenres])
 
-  const availableGenres = useMemo(
-    () => Array.from(new Set(items.flatMap((s) => s.genres ?? []))).sort(),
-    [items]
-  )
+  useAutoRetry(items.length === 0, loading, fetchAll)
+
+  const hasMore = items.length < totalCount
 
   return (
     <div
@@ -72,9 +74,10 @@ export function SeriesPage() {
             className="w-full max-w-sm px-4 py-2 text-sm rounded bg-neutral-800 border border-neutral-700 text-white placeholder-gray-500 focus:outline-none focus:border-white"
           />
 
-          {availableGenres.length > 0 && (
+          {allGenres.length > 0 && (
             <div className="flex flex-wrap">
               <button
+                data-filter-chip
                 onClick={() => setGenre(undefined)}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                   !genre ? 'text-black border-transparent' : 'text-gray-400 border-gray-600 hover:border-gray-400'
@@ -83,9 +86,10 @@ export function SeriesPage() {
               >
                 {t('search.filters')} (todos)
               </button>
-              {availableGenres.map((g) => (
+              {allGenres.map((g) => (
                 <button
                   key={g}
+                  data-filter-chip
                   onClick={() => setGenre(genre === g ? undefined : g)}
                   className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                     genre === g

@@ -13,9 +13,11 @@ interface SeriesState {
   title: string
   genre: string | undefined
   page: number
+  allGenres: string[]
   fetchAll: () => Promise<void>
   appendItems: () => Promise<void>
   fetchById: (id: string) => Promise<void>
+  fetchGenres: () => Promise<void>
   setTitle: (title: string) => void
   setGenre: (genre: string | undefined) => void
 }
@@ -29,6 +31,7 @@ export const useSeriesStore = create<SeriesState>((set, get) => ({
   title: '',
   genre: undefined,
   page: 1,
+  allGenres: [],
 
   fetchAll: async () => {
     const { title, genre } = get()
@@ -60,6 +63,15 @@ export const useSeriesStore = create<SeriesState>((set, get) => ({
       set({ selected: series, loading: false })
     } catch {
       set({ error: 'Serie no encontrada', loading: false })
+    }
+  },
+
+  fetchGenres: async () => {
+    try {
+      const genres = await seriesService.getGenres()
+      set({ allGenres: genres })
+    } catch {
+      // no-op
     }
   },
 

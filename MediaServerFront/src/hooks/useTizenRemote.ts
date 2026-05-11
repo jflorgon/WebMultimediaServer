@@ -57,17 +57,39 @@ function scrollFocusedIntoView(el: HTMLElement) {
   }
 }
 
+// Devuelve el contenedor scrollable activo: overlay de vídeo, overlay de detalle, o window.
+// Tizen 5/6 (Chromium 63-76) tiene un bug por el cual `position: fixed/sticky` dentro de un
+// `overflow: auto` ancestral scrollea con el contenido, por eso necesitamos scrollear el
+// contenedor real (no `window`, que es no-op cuando body tiene `overflow: hidden`).
+function getScrollContainer(): HTMLElement | null {
+  const videoOverlay = document.querySelector<HTMLElement>(
+    'div[style*="z-index: 9999"], div[style*="z-index:9999"]'
+  )
+  if (videoOverlay) return videoOverlay
+  const detailOverlay = document.querySelector<HTMLElement>(
+    'div[style*="z-index: 100"], div[style*="z-index:100"]'
+  )
+  if (detailOverlay) return detailOverlay
+  return null
+}
+
+function scrollViewport(direction: 'up' | 'down') {
+  const amount = 240
+  const top = direction === 'up' ? -amount : amount
+  const scroller = getScrollContainer()
+  if (scroller) {
+    scroller.scrollBy({ top, behavior: 'smooth' })
+  } else {
+    window.scrollBy({ top, behavior: 'smooth' })
+  }
+}
+
 function getFocusable(): HTMLElement[] {
   // Si hay un overlay (modal/reproductor) visible, limitar la búsqueda a su contenido.
   // El overlay del reproductor de vídeo tiene z-index 9999; el de detalle tiene 100.
   // El navbar fixed (z-50) queda excluido cuando hay overlay activo.
-  const overlayCandidates = Array.from(
-    document.querySelectorAll<HTMLElement>('div[style*="z-index: 9999"], div[style*="z-index:9999"]')
-  )
-  const detailOverlay = document.querySelector<HTMLElement>(
-    'div[style*="z-index: 100"], div[style*="z-index:100"]'
-  )
-  const root: ParentNode = overlayCandidates[0] ?? detailOverlay ?? document
+  const scroller = getScrollContainer()
+  const root: ParentNode = scroller ?? document
 
   const all = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
   return all.filter((el) => {
@@ -161,6 +183,11 @@ function moveFocus(direction: Direction) {
     // preventScroll evita el doble-scroll (focus + scroll manual).
     best.focus({ preventScroll: true })
     scrollFocusedIntoView(best)
+  } else if (direction === 'up' || direction === 'down') {
+    // No hay candidato en esta dirección: scrollear el contenedor activo para que
+    // el usuario pueda ver el héroe (arriba) o continuar (abajo) aunque ningún
+    // focusable lo lleve allí.
+    scrollViewport(direction)
   }
 }
 

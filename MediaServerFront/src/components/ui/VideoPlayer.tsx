@@ -136,7 +136,10 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
         <>
           <video
             ref={videoRef}
-            controls
+            playsInline
+            disablePictureInPicture
+            disableRemotePlayback
+            controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
             style={{
               position: 'absolute',
               top: 0,
@@ -147,6 +150,7 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
               display: 'block',
               opacity: ready ? 1 : 0,
               transition: 'opacity 0.3s',
+              objectFit: 'contain',
             }}
           />
         </>

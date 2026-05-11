@@ -13,9 +13,11 @@ interface MoviesState {
   title: string
   genre: string | undefined
   page: number
+  allGenres: string[]
   fetchAll: () => Promise<void>
   appendItems: () => Promise<void>
   fetchById: (id: string) => Promise<void>
+  fetchGenres: () => Promise<void>
   setTitle: (title: string) => void
   setGenre: (genre: string | undefined) => void
 }
@@ -29,6 +31,7 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
   title: '',
   genre: undefined,
   page: 1,
+  allGenres: [],
 
   fetchAll: async () => {
     const { title, genre } = get()
@@ -60,6 +63,15 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
       set({ selected: movie, loading: false })
     } catch {
       set({ error: 'Película no encontrada', loading: false })
+    }
+  },
+
+  fetchGenres: async () => {
+    try {
+      const genres = await movieService.getGenres()
+      set({ allGenres: genres })
+    } catch {
+      // no-op; los chips quedan vacíos si falla
     }
   },
 

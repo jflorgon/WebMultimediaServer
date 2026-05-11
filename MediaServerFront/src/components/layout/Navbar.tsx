@@ -3,6 +3,16 @@ import { Link, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useScannerStore } from '../../store/useScannerStore'
 
+const isTizen = import.meta.env.VITE_TIZEN === 'true'
+
+function exitApp() {
+  try {
+    window.tizen?.application?.getCurrentApplication().exit()
+  } catch {
+    window.close()
+  }
+}
+
 export function Navbar() {
   const { t, i18n } = useTranslation()
   const { triggering, trigger } = useScannerStore()
@@ -97,9 +107,26 @@ export function Navbar() {
         <button
           onClick={() => i18n.changeLanguage(i18n.language === 'es' ? 'en' : 'es')}
           className="text-xs text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+          style={isTizen ? { marginRight: '0.75rem' } : undefined}
         >
           {i18n.language === 'es' ? 'EN' : 'ES'}
         </button>
+
+        {/* Salir (solo Tizen) */}
+        {isTizen && (
+          <button
+            onClick={exitApp}
+            aria-label={t('nav.exit', 'Salir')}
+            title={t('nav.exit', 'Salir')}
+            className="text-gray-300 hover:text-white transition-colors"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        )}
       </div>
     </nav>
   )

@@ -7,6 +7,8 @@ import { Spinner } from '../components/ui/Spinner'
 import { formatRuntime, formatRating } from '../utils/formatters'
 import { streamUrl } from '../services/streaming'
 
+const isTizen = import.meta.env.VITE_TIZEN === 'true'
+
 const VideoPlayer = lazy(() =>
   import('../components/ui/VideoPlayer').then(m => ({ default: m.VideoPlayer }))
 )
@@ -37,6 +39,29 @@ export function DocumentaryDetailPage() {
         </Suspense>
       )}
 
+      {!isTizen && (
+        <div
+          data-tv-fixed-top
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 30,
+            paddingLeft: '4vw',
+            paddingTop: '0.75rem',
+            paddingBottom: '0.75rem',
+            background: 'linear-gradient(to bottom, rgba(20,20,20,0.92) 0%, rgba(20,20,20,0) 100%)',
+          }}
+        >
+          <button
+            onClick={() => navigate(-1)}
+            className="text-white hover:text-gray-300 transition-colors inline-flex items-center gap-2"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
+          >
+            ← {t('common.back', 'Volver')}
+          </button>
+        </div>
+      )}
+
       <div
         className="relative w-full"
         style={{
@@ -60,14 +85,6 @@ export function DocumentaryDetailPage() {
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
         />
       </div>
-
-      <button
-        onClick={() => navigate(-1)}
-        className="z-30 px-6 text-white hover:text-gray-300 transition-colors flex items-center gap-2"
-        style={{ position: 'fixed', top: 'var(--navbar-h)', left: 0, paddingTop: '0.75rem', paddingBottom: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
-      >
-        ← Volver
-      </button>
 
       <motion.div
         className="relative pb-8"
@@ -149,7 +166,11 @@ export function DocumentaryDetailPage() {
             )}
 
             {selected.overview && (
-              <p className="text-gray-300 leading-relaxed text-base max-w-2xl">
+              <p
+                tabIndex={0}
+                className="text-gray-300 leading-relaxed text-base max-w-2xl"
+                style={{ padding: '0.5rem 0', borderRadius: 6 }}
+              >
                 {selected.overview}
               </p>
             )}

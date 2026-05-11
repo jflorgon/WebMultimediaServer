@@ -11,4 +11,7 @@ export const seriesService = {
 
   getEpisodes: (id: string) =>
     api.get<EpisodeListItem[]>(`/series/${id}/episodes`).then((r) => r.data),
+
+  getGenres: () =>
+    api.get<string[]>('/series/genres').then((r) => r.data),
 }
