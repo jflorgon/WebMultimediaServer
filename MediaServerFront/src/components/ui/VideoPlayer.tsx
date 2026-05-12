@@ -1,5 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
+
+const isTizen = import.meta.env.VITE_TIZEN === 'true'
+
+const HIDE_DELAY_MS = 4000
+
+function formatTime(s: number): string {
+  if (!isFinite(s) || s < 0) return '0:00'
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = Math.floor(s % 60)
+  const mm = h > 0 ? String(m).padStart(2, '0') : String(m)
+  const ss = String(sec).padStart(2, '0')
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
+}
 
 interface VideoPlayerProps {
   src: string
@@ -7,10 +21,25 @@ interface VideoPlayerProps {
   onClose: () => void
 }
 
-export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
+export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [buffering, setBuffering] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const hideTimerRef = useRef<number | null>(null)
+
+  const showControls = useCallback(() => {
+    setControlsVisible(true)
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current)
+    hideTimerRef.current = window.setTimeout(() => {
+      const v = videoRef.current
+      if (v && !v.paused) setControlsVisible(false)
+    }, HIDE_DELAY_MS)
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
@@ -23,8 +52,9 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setReady(true)
         video.play().catch(() => {})
-        // Pantalla completa automática al iniciar la reproducción
-        try { video.requestFullscreen?.() } catch { /* no-op */ }
+        if (!isTizen) {
+          try { video.requestFullscreen?.() } catch { /* no-op */ }
+        }
       })
       hls.on(Hls.Events.ERROR, (_e, data) => {
         console.error('[HLS] error:', data.type, data.details, 'fatal:', data.fatal, data)
@@ -42,15 +72,54 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
       video.addEventListener('loadedmetadata', () => {
         setReady(true)
         video.play().catch(() => {})
-        try { video.requestFullscreen?.() } catch { /* no-op */ }
+        if (!isTizen) {
+          try { video.requestFullscreen?.() } catch { /* no-op */ }
+        }
       })
     }
   }, [src])
+
+  // Eventos del <video> para alimentar la UI
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    const onTime = () => setCurrentTime(v.currentTime)
+    const onMeta = () => setDuration(v.duration || 0)
+    const onPlay = () => { setPlaying(true); showControls() }
+    const onPause = () => { setPlaying(false); setControlsVisible(true) }
+    const onWaiting = () => setBuffering(true)
+    const onCanPlay = () => setBuffering(false)
+    v.addEventListener('timeupdate', onTime)
+    v.addEventListener('loadedmetadata', onMeta)
+    v.addEventListener('durationchange', onMeta)
+    v.addEventListener('play', onPlay)
+    v.addEventListener('pause', onPause)
+    v.addEventListener('waiting', onWaiting)
+    v.addEventListener('canplay', onCanPlay)
+    v.addEventListener('playing', onCanPlay)
+    return () => {
+      v.removeEventListener('timeupdate', onTime)
+      v.removeEventListener('loadedmetadata', onMeta)
+      v.removeEventListener('durationchange', onMeta)
+      v.removeEventListener('play', onPlay)
+      v.removeEventListener('pause', onPause)
+      v.removeEventListener('waiting', onWaiting)
+      v.removeEventListener('canplay', onCanPlay)
+      v.removeEventListener('playing', onCanPlay)
+    }
+  }, [showControls])
+
+  // Auto-hide inicial cuando empieza a reproducir
+  useEffect(() => {
+    if (ready && playing) showControls()
+  }, [ready, playing, showControls])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const video = videoRef.current
       if (!video) return
+      // Cualquier tecla revela los controles
+      showControls()
       // Escape / botón Return de Tizen → cerrar
       if (e.key === 'Escape' || e.keyCode === 10009) {
         e.preventDefault()
@@ -58,7 +127,6 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
         onClose()
         return
       }
-      // Flecha izq/der → ±10s
       if (e.key === 'ArrowLeft' || e.keyCode === 37) {
         e.preventDefault()
         e.stopPropagation()
@@ -71,7 +139,6 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
         video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 10)
         return
       }
-      // OK / Enter / Espacio → play/pause
       if (e.key === 'Enter' || e.key === ' ' || e.keyCode === 13) {
         e.preventDefault()
         e.stopPropagation()
@@ -79,7 +146,6 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
         else video.pause()
         return
       }
-      // Flecha arriba/abajo → ±60s (saltos largos)
       if (e.key === 'ArrowUp' || e.keyCode === 38) {
         e.preventDefault()
         e.stopPropagation()
@@ -93,15 +159,42 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
         return
       }
     }
-    // Captura para interceptar antes que useTizenRemote
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
-  }, [onClose])
+  }, [onClose, showControls])
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current)
+    }
   }, [])
+
+  const togglePlay = () => {
+    const v = videoRef.current
+    if (!v) return
+    if (v.paused) v.play().catch(() => {})
+    else v.pause()
+  }
+
+  const seekRelative = (delta: number) => {
+    const v = videoRef.current
+    if (!v) return
+    v.currentTime = Math.max(0, Math.min(v.duration || Infinity, v.currentTime + delta))
+    showControls()
+  }
+
+  const onSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const v = videoRef.current
+    if (!v || !duration) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const ratio = (e.clientX - rect.left) / rect.width
+    v.currentTime = Math.max(0, Math.min(duration, ratio * duration))
+    showControls()
+  }
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
   return (
     <div
@@ -118,6 +211,7 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
         alignItems: 'center',
         justifyContent: 'center',
       }}
+      onMouseMove={isTizen ? undefined : showControls}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       {!ready && !error && (
@@ -153,10 +247,196 @@ export function VideoPlayer({ src, title: _title, onClose }: VideoPlayerProps) {
               objectFit: 'contain',
             }}
           />
+
+          {ready && buffering && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 56,
+                height: 56,
+                border: '4px solid rgba(255,255,255,0.18)',
+                borderTopColor: '#e50914',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+
+          {/* Controles inferiores */}
+          {ready && (
+            <div
+              data-controls
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                padding: isTizen ? '0 4vw 2.2rem' : '0 3vw 1.4rem',
+                paddingTop: isTizen ? '6rem' : '4rem',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0) 100%)',
+                opacity: controlsVisible ? 1 : 0,
+                transition: 'opacity 0.25s ease',
+                pointerEvents: controlsVisible ? 'auto' : 'none',
+                color: '#fff',
+              }}
+            >
+              {title && (
+                <div
+                  style={{
+                    fontSize: isTizen ? '1.6rem' : '1.1rem',
+                    fontWeight: 600,
+                    marginBottom: isTizen ? '1rem' : '0.6rem',
+                    textShadow: '0 1px 6px rgba(0,0,0,0.6)',
+                  }}
+                >
+                  {title}
+                </div>
+              )}
+
+              {/* Barra de progreso */}
+              <div
+                onClick={isTizen ? undefined : onSeekClick}
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: isTizen ? 10 : 6,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  borderRadius: 999,
+                  cursor: isTizen ? 'default' : 'pointer',
+                  marginBottom: isTizen ? '0.7rem' : '0.5rem',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    width: `${progress}%`,
+                    backgroundColor: '#e50914',
+                    borderRadius: 999,
+                    transition: 'width 0.1s linear',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: `${progress}%`,
+                    width: isTizen ? 20 : 14,
+                    height: isTizen ? 20 : 14,
+                    backgroundColor: '#fff',
+                    borderRadius: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    boxShadow: '0 0 6px rgba(0,0,0,0.6)',
+                  }}
+                />
+              </div>
+
+              {/* Fila tiempos + botones */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: isTizen ? '1.1rem' : '0.85rem',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <ControlButton onClick={() => seekRelative(-60)} ariaLabel="-60s">
+                    <span style={{ fontSize: '0.85em' }}>−60s</span>
+                  </ControlButton>
+                  <ControlButton onClick={() => seekRelative(-10)} ariaLabel="-10s">
+                    <span style={{ fontSize: '0.85em' }}>−10s</span>
+                  </ControlButton>
+                  <ControlButton onClick={togglePlay} ariaLabel={playing ? 'Pausa' : 'Reproducir'} primary>
+                    {playing ? (
+                      <svg width={isTizen ? 28 : 20} height={isTizen ? 28 : 20} viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="5" width="4" height="14" rx="1" />
+                        <rect x="14" y="5" width="4" height="14" rx="1" />
+                      </svg>
+                    ) : (
+                      <svg width={isTizen ? 28 : 20} height={isTizen ? 28 : 20} viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    )}
+                  </ControlButton>
+                  <ControlButton onClick={() => seekRelative(10)} ariaLabel="+10s">
+                    <span style={{ fontSize: '0.85em' }}>+10s</span>
+                  </ControlButton>
+                  <ControlButton onClick={() => seekRelative(60)} ariaLabel="+60s">
+                    <span style={{ fontSize: '0.85em' }}>+60s</span>
+                  </ControlButton>
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </div>
+              </div>
+
+              {isTizen && (
+                <div
+                  style={{
+                    marginTop: '0.6rem',
+                    fontSize: '0.8rem',
+                    color: 'rgba(255,255,255,0.55)',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  ◀ ▶ ±10s · ▲ ▼ ±60s · OK pausa · RETURN salir
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        video::-webkit-media-controls,
+        video::-webkit-media-controls-enclosure,
+        video::-webkit-media-controls-panel,
+        video::-webkit-media-controls-overlay-play-button,
+        video::-webkit-media-controls-start-playback-button,
+        video::-internal-media-controls-overlay-cast-button { display: none !important; -webkit-appearance: none !important; }
+      `}</style>
     </div>
+  )
+}
+
+function ControlButton({
+  onClick, ariaLabel, primary, children,
+}: {
+  onClick: () => void
+  ariaLabel: string
+  primary?: boolean
+  children: React.ReactNode
+}) {
+  const size = isTizen ? (primary ? 56 : 44) : (primary ? 40 : 32)
+  return (
+    <button
+      onClick={onClick}
+      aria-label={ariaLabel}
+      style={{
+        width: size,
+        height: size,
+        marginRight: isTizen ? '0.9rem' : '0.5rem',
+        borderRadius: '50%',
+        border: 'none',
+        backgroundColor: primary ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.18)',
+        color: primary ? '#000' : '#fff',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        fontWeight: 600,
+      }}
+    >
+      {children}
+    </button>
   )
 }

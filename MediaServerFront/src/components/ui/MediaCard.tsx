@@ -99,14 +99,20 @@ export function MediaCard({
               className="absolute left-0 right-0 top-full rounded-b-md z-10"
               style={{
                 backgroundColor: 'var(--netflix-gray)',
-                padding: '0.3rem 0.45rem 0.35rem',
+                padding: isTizen ? '0.6rem 0.7rem 0.65rem' : '0.3rem 0.45rem 0.35rem',
                 boxShadow: isTizen
                   ? '0 0 0 3px rgba(229, 9, 20, 1), 0 0 14px 2px rgba(229, 9, 20, 0.55), 0 0 28px 6px rgba(229, 9, 20, 0.22)'
                   : undefined,
               }}
             >
-              <p className={`text-white font-semibold leading-snug truncate text-center ${isTizen ? 'text-base' : 'text-sm'}`}>{title}</p>
-              <div className={`flex items-center mt-1 text-gray-400 ${isTizen ? 'text-sm' : 'text-xs'}`}>
+              <p
+                className={`text-white font-semibold truncate text-center ${isTizen ? 'text-base' : 'text-sm leading-snug'}`}
+                style={isTizen ? { lineHeight: 1.1 } : undefined}
+              >{title}</p>
+              <div
+                className={`flex items-center text-gray-400 ${isTizen ? 'text-sm justify-center' : 'text-xs mt-1'}`}
+                style={isTizen ? { marginTop: '0.1rem', lineHeight: 1.1 } : undefined}
+              >
                 {year && (
                   <span className="text-green-400 font-medium" style={{ marginRight: rating != null ? '0.6rem' : 0 }}>{year}</span>
                 )}
@@ -115,12 +121,23 @@ export function MediaCard({
                 )}
               </div>
               {genres && genres.length > 0 && (
-                <div className="flex flex-wrap mt-2">
+                <div
+                  className={`flex flex-wrap ${isTizen ? 'justify-center' : 'mt-2'}`}
+                  style={isTizen ? { marginTop: '0.2rem' } : undefined}
+                >
                   {genres.slice(0, 3).map((g, i, arr) => (
                     <span
                       key={g}
-                      className={`text-gray-400 border border-gray-600 rounded px-1.5 py-0.5 ${isTizen ? 'text-xs' : 'text-[10px]'}`}
-                      style={{ marginRight: i < arr.length - 1 ? '0.4rem' : 0, marginBottom: '0.25rem' }}
+                      className={`text-gray-300 rounded px-1.5 ${isTizen ? 'text-xs' : 'text-[10px] border border-gray-600 py-0.5'}`}
+                      style={{
+                        marginRight: i < arr.length - 1 ? '0.4rem' : 0,
+                        marginBottom: isTizen ? '0.15rem' : '0.25rem',
+                        lineHeight: isTizen ? 1.2 : undefined,
+                        ...(isTizen && {
+                          border: '2px solid rgba(255, 255, 255, 0.45)',
+                          padding: '0.1rem 0.45rem',
+                        }),
+                      }}
                     >
                       {g}
                     </span>
@@ -128,7 +145,10 @@ export function MediaCard({
                 </div>
               )}
               {subtitle && (
-                <p className={`text-gray-500 mt-1 ${isTizen ? 'text-sm' : 'text-xs'}`}>{subtitle}</p>
+                <p
+                  className={`text-gray-500 ${isTizen ? 'text-sm text-center' : 'text-xs mt-1'}`}
+                  style={isTizen ? { marginTop: '0.1rem', lineHeight: 1.1 } : undefined}
+                >{subtitle}</p>
               )}
             </motion.div>
           )}
