@@ -28,6 +28,7 @@ public sealed class UpsertSeriesCommandHandler(IApplicationDbContext db)
                 Overview = request.Overview,
                 Genres = request.Genres,
                 Rating = request.Rating,
+                AgeRating = request.AgeRating,
                 Seasons = request.Seasons,
                 Episodes = request.Episodes,
                 TmdbId = request.TmdbId,
@@ -51,6 +52,7 @@ public sealed class UpsertSeriesCommandHandler(IApplicationDbContext db)
             existing.Overview = request.Overview;
             existing.Genres = request.Genres;
             existing.Rating = request.Rating;
+            existing.AgeRating = request.AgeRating;
             existing.Seasons = request.Seasons;
             existing.Episodes = request.Episodes;
             existing.TmdbId = request.TmdbId;

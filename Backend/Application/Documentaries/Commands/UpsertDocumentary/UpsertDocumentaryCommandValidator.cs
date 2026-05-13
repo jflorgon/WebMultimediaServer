@@ -42,6 +42,10 @@ public sealed class UpsertDocumentaryCommandValidator : AbstractValidator<Upsert
             .InclusiveBetween(0.0, 10.0)
             .When(x => x.Rating is not null);
 
+        RuleFor(x => x.AgeRating)
+            .MaximumLength(10)
+            .When(x => x.AgeRating is not null);
+
         RuleFor(x => x.RuntimeMinutes)
             .GreaterThan(0)
             .When(x => x.RuntimeMinutes is not null);

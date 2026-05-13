@@ -11,4 +11,7 @@ export const documentaryService = {
 
   getGenres: () =>
     api.get<string[]>('/documentaries/genres').then((r) => r.data),
+
+  getHero: (count: number, minRating = 6) =>
+    api.get<DocumentaryListItem[]>('/documentaries/hero', { params: { count, minRating } }).then((r) => r.data),
 }

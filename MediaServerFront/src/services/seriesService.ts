@@ -14,4 +14,7 @@ export const seriesService = {
 
   getGenres: () =>
     api.get<string[]>('/series/genres').then((r) => r.data),
+
+  getHero: (count: number, minRating = 6) =>
+    api.get<SeriesListItem[]>('/series/hero', { params: { count, minRating } }).then((r) => r.data),
 }

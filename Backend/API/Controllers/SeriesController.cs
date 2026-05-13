@@ -1,4 +1,5 @@
 using Application.Series.Queries.GetEpisodesBySeries;
+using Application.Series.Queries.GetHeroSeries;
 using Application.Series.Queries.GetSeries;
 using Application.Series.Queries.GetSeriesById;
 using Application.Series.Queries.GetSeriesGenres;
@@ -45,6 +46,17 @@ public sealed class SeriesController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<IReadOnlyList<string>>> GetGenres(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetSeriesGenresQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("hero")]
+    public async Task<ActionResult<IReadOnlyList<SeriesListItemDto>>> GetHero(
+        [FromQuery] int count = 3,
+        [FromQuery] double minRating = 6.0,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(new GetHeroSeriesQuery(count, minRating), cancellationToken);
+        Response.Headers["Cache-Control"] = "no-store";
         return Ok(result);
     }
 }

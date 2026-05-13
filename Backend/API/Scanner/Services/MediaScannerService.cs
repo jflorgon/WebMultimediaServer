@@ -200,6 +200,10 @@ public sealed partial class MediaScannerService(
             .Select(id => tvGenres.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty)
             .Where(n => !string.IsNullOrEmpty(n)).ToList() ?? [];
 
+        string? ageRating = null;
+        if (result?.Id is int tvId)
+            ageRating = await tmdbClient.GetTvCertificationAsync(tvId, cancellationToken);
+
         var seriesId = await mediator.Send(new UpsertSeriesCommand(
             FilePath: seriesFolder,
             Title: result?.Name ?? cleanTitle,
@@ -210,6 +214,7 @@ public sealed partial class MediaScannerService(
             Overview: result?.Overview,
             Genres: genres,
             Rating: result?.VoteAverage > 0 ? result.VoteAverage : null,
+            AgeRating: ageRating,
             Seasons: result?.NumberOfSeasons ?? 1,
             Episodes: result?.NumberOfEpisodes ?? 1,
             TmdbId: result?.Id,
@@ -383,6 +388,10 @@ public sealed partial class MediaScannerService(
                 .Select(id => movieGenres.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty)
                 .Where(n => !string.IsNullOrEmpty(n)).ToList() ?? [];
 
+            string? ageRating = null;
+            if (result?.Id is int dmId)
+                ageRating = await tmdbClient.GetMovieCertificationAsync(dmId, cancellationToken);
+
             await mediator.Send(new UpsertDocumentaryCommand(
                 FilePath: filePath,
                 Title: result?.Title ?? cleanTitle,
@@ -393,6 +402,7 @@ public sealed partial class MediaScannerService(
                 Overview: result?.Overview,
                 Genres: genres,
                 Rating: result?.VoteAverage > 0 ? result.VoteAverage : null,
+                AgeRating: ageRating,
                 RuntimeMinutes: result?.Runtime,
                 TmdbId: result?.Id
             ), cancellationToken);
@@ -429,6 +439,10 @@ public sealed partial class MediaScannerService(
                 .Select(id => movieGenres.FirstOrDefault(g => g.Id == id)?.Name ?? string.Empty)
                 .Where(n => !string.IsNullOrEmpty(n)).ToList() ?? [];
 
+            string? ageRating = null;
+            if (result?.Id is int mvId)
+                ageRating = await tmdbClient.GetMovieCertificationAsync(mvId, cancellationToken);
+
             await mediator.Send(new UpsertMovieCommand(
                 FilePath: filePath,
                 Title: result?.Title ?? cleanTitle,
@@ -439,6 +453,7 @@ public sealed partial class MediaScannerService(
                 Overview: result?.Overview,
                 Genres: genres,
                 Rating: result?.VoteAverage > 0 ? result.VoteAverage : null,
+                AgeRating: ageRating,
                 RuntimeMinutes: result?.Runtime,
                 TmdbId: result?.Id
             ), cancellationToken);

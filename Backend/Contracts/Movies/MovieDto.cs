@@ -12,6 +12,7 @@ public sealed record MovieDto
     public string? Overview { get; init; }
     public List<string> Genres { get; init; } = [];
     public double? Rating { get; init; }
+    public string? AgeRating { get; init; }
     public int? RuntimeMinutes { get; init; }
     public int? TmdbId { get; init; }
     public DateTime CreatedAt { get; init; }

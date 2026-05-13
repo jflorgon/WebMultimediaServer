@@ -18,9 +18,11 @@ public sealed class ScannerController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("trigger")]
-    public async Task<IActionResult> Trigger(CancellationToken cancellationToken)
+    public async Task<IActionResult> Trigger(
+        [FromQuery] bool force = false,
+        CancellationToken cancellationToken = default)
     {
-        await mediator.Send(new TriggerScanCommand(), cancellationToken);
+        await mediator.Send(new TriggerScanCommand(force), cancellationToken);
         return Accepted();
     }
 }

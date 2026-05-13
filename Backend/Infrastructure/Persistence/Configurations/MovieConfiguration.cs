@@ -14,6 +14,7 @@ public sealed class MovieConfiguration : IEntityTypeConfiguration<Movie>
         builder.Property(m => m.FilePath).HasMaxLength(1000).IsRequired();
         builder.Property(m => m.PosterUrl).HasMaxLength(500);
         builder.Property(m => m.BackdropUrl).HasMaxLength(500);
+        builder.Property(m => m.AgeRating).HasMaxLength(10);
         builder.HasIndex(m => m.FilePath).IsUnique();
         builder.HasIndex(m => m.TmdbId);
         builder.PrimitiveCollection(m => m.Genres).HasColumnType("nvarchar(max)");

@@ -13,6 +13,7 @@ public sealed record UpsertSeriesCommand(
     string? Overview,
     List<string> Genres,
     double? Rating,
+    string? AgeRating,
     int Seasons,
     int Episodes,
     int? TmdbId,

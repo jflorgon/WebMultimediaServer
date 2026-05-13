@@ -9,9 +9,17 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
     private static readonly TimeSpan TtlIdle = TimeSpan.FromHours(2);
     private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(30);
 
+    // Si el cliente deja de mandar keep-alive durante más de este tiempo, matamos el FFmpeg.
+    // 90 s tolera pausas largas (el frontend manda heartbeat cada 30 s) y aún así libera
+    // CPU rápidamente cuando el usuario abandona la página sin avisar.
+    private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromSeconds(90);
+    private static readonly TimeSpan HeartbeatCheckInterval = TimeSpan.FromSeconds(15);
+
     private readonly ILogger<HlsStreamingService> _logger;
     private readonly ConcurrentDictionary<Guid, byte> _running = new();
     private readonly ConcurrentDictionary<Guid, DateTime> _lastAccessed = new();
+    private readonly ConcurrentDictionary<Guid, DateTime> _lastHeartbeat = new();
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _ffmpegCts = new();
     private readonly Timer _cleanupTimer;
 
     public HlsStreamingService(ILogger<HlsStreamingService> logger)
@@ -29,6 +37,7 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         var playlistPath = Path.Combine(tempDir, "playlist.m3u8");
 
         _lastAccessed[id] = DateTime.UtcNow;
+        _lastHeartbeat[id] = DateTime.UtcNow;
 
         if (File.Exists(playlistPath))
             return tempDir;
@@ -36,7 +45,12 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         Directory.CreateDirectory(tempDir);
 
         if (_running.TryAdd(id, 0))
-            _ = Task.Run(() => RunFfmpegAsync(id, filePath, tempDir), CancellationToken.None);
+        {
+            var cts = new CancellationTokenSource();
+            _ffmpegCts[id] = cts;
+            _ = Task.Run(() => RunFfmpegAsync(id, filePath, tempDir, cts.Token), CancellationToken.None);
+            _ = Task.Run(() => WatchHeartbeatAsync(id, cts));
+        }
 
         var deadline = DateTime.UtcNow.AddSeconds(120);
         while (!File.Exists(playlistPath) && DateTime.UtcNow < deadline)
@@ -54,7 +68,14 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
     public string GetSegmentPath(Guid id, string filename)
     {
         _lastAccessed[id] = DateTime.UtcNow;
+        _lastHeartbeat[id] = DateTime.UtcNow;
         return Path.Combine(GetTempDir(id), filename);
+    }
+
+    public void RegisterHeartbeat(Guid id)
+    {
+        _lastHeartbeat[id] = DateTime.UtcNow;
+        _lastAccessed[id] = DateTime.UtcNow;
     }
 
     private static string GetTempDir(Guid id) =>
@@ -94,7 +115,33 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         }
     }
 
-    private async Task RunFfmpegAsync(Guid id, string filePath, string tempDir)
+    private async Task WatchHeartbeatAsync(Guid id, CancellationTokenSource cts)
+    {
+        while (!cts.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(HeartbeatCheckInterval, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (!_lastHeartbeat.TryGetValue(id, out var last)) continue;
+
+            if (DateTime.UtcNow - last > HeartbeatTimeout)
+            {
+                _logger.LogInformation(
+                    "Cancelando FFmpeg para {Id}: último heartbeat hace {Elapsed:F0}s",
+                    id, (DateTime.UtcNow - last).TotalSeconds);
+                cts.Cancel();
+                return;
+            }
+        }
+    }
+
+    private async Task RunFfmpegAsync(Guid id, string filePath, string tempDir, CancellationToken ct)
     {
         var segmentPattern = Path.Combine(tempDir, "seg%03d.ts");
         var playlistPath = Path.Combine(tempDir, "playlist.m3u8");
@@ -131,7 +178,18 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
             // Drena stderr continuamente para que FFmpeg no bloquee cuando el pipe buffer se llena
             _ = process.StandardError.BaseStream.CopyToAsync(Stream.Null);
             _logger.LogInformation("FFmpeg HLS iniciado para {Id}: {FilePath}", id, filePath);
-            await process.WaitForExitAsync();
+
+            try
+            {
+                await process.WaitForExitAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("FFmpeg cancelado para {Id} (heartbeat timeout)", id);
+                try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+                catch (Exception killEx) { _logger.LogWarning(killEx, "Error matando FFmpeg para {Id}", id); }
+            }
+
             _logger.LogInformation("FFmpeg HLS finalizado para {Id}, código: {Code}", id, process.ExitCode);
         }
         catch (Exception ex)
@@ -141,6 +199,12 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         finally
         {
             _running.TryRemove(id, out _);
+            if (_ffmpegCts.TryRemove(id, out var heartbeatCts))
+            {
+                heartbeatCts.Cancel();
+                heartbeatCts.Dispose();
+            }
+            _lastHeartbeat.TryRemove(id, out _);
         }
     }
 
@@ -164,5 +228,12 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         return codec;
     }
 
-    public void Dispose() => _cleanupTimer.Dispose();
+    public void Dispose()
+    {
+        _cleanupTimer.Dispose();
+        foreach (var cts in _ffmpegCts.Values)
+        {
+            try { cts.Cancel(); cts.Dispose(); } catch { /* no-op */ }
+        }
+    }
 }

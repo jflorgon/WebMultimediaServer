@@ -12,6 +12,7 @@ public sealed class Documentary
     public string? Overview { get; set; }
     public List<string> Genres { get; set; } = [];
     public double? Rating { get; set; }
+    public string? AgeRating { get; set; }
     public int? RuntimeMinutes { get; set; }
     public int? TmdbId { get; set; }
     public DateTime CreatedAt { get; set; }

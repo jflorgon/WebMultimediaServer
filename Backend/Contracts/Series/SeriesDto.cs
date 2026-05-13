@@ -12,6 +12,7 @@ public sealed record SeriesDto
     public string? Overview { get; init; }
     public List<string> Genres { get; init; } = [];
     public double? Rating { get; init; }
+    public string? AgeRating { get; init; }
     public int Seasons { get; init; }
     public int Episodes { get; init; }
     public int? TmdbId { get; init; }

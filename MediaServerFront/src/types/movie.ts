@@ -9,6 +9,7 @@ export interface Movie {
   overview?: string
   genres: string[]
   rating?: number
+  ageRating?: string
   runtimeMinutes?: number
   tmdbId?: number
   createdAt: string

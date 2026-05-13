@@ -11,4 +11,7 @@ export const movieService = {
 
   getGenres: () =>
     api.get<string[]>('/movies/genres').then((r) => r.data),
+
+  getHero: (count: number, minRating = 6) =>
+    api.get<MovieListItem[]>('/movies/hero', { params: { count, minRating } }).then((r) => r.data),
 }

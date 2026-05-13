@@ -12,5 +12,6 @@ public sealed record UpsertMovieCommand(
     string? Overview,
     List<string> Genres,
     double? Rating,
+    string? AgeRating,
     int? RuntimeMinutes,
     int? TmdbId) : IRequest<Guid>;

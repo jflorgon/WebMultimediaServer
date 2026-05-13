@@ -13,6 +13,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { movieService } from '../services/movieService'
 import { seriesService } from '../services/seriesService'
 import { documentaryService } from '../services/documentaryService'
+import { formatRating } from '../utils/formatters'
 import type { SeriesListItem } from '../types/series'
 import type { DocumentaryListItem } from '../types/documentary'
 
@@ -22,6 +23,7 @@ type HeroItem = {
   overview?: string
   backdropUrl?: string
   posterUrl?: string
+  rating?: number | null
   type: 'movie' | 'series' | 'documentary'
   linkTo: string
 }
@@ -35,6 +37,9 @@ type RowItem = {
   rating?: number | null
   genres: string[]
 }
+
+const HERO_MIN_RATING = 6
+const HERO_COUNTS = { movies: 4, series: 3, documentaries: 2 } as const
 
 function ContentRow({
   title,
@@ -181,10 +186,21 @@ function HeroSection({
           transition={{ duration: 0.5 }}
         >
           <div
-            className="text-xs font-bold uppercase tracking-widest mb-2"
+            className="flex items-center text-xs font-bold uppercase tracking-widest mb-2"
             style={{ color: 'var(--netflix-red)' }}
           >
-            {TYPE_LABEL[item.type]}
+            <span>{TYPE_LABEL[item.type]}</span>
+            {item.rating != null && (
+              <span
+                style={{
+                  marginLeft: '0.75rem',
+                  color: '#facc15',
+                  letterSpacing: 'normal',
+                }}
+              >
+                ★ {formatRating(item.rating)}
+              </span>
+            )}
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white leading-tight mb-4 drop-shadow-lg">
             {item.title}
@@ -257,37 +273,45 @@ export function HomePage() {
   useAutoRetry(series.length === 0, sl, fetchSeries)
   useAutoRetry(docs.length === 0, dl, fetchDocs)
 
-  // Fase 1: hero inmediato desde datos de lista (sin esperar API extra)
+  // Fase 1: hero aleatorio desde endpoints dedicados (filtra rating ≥ 6 con padding en backend)
   useEffect(() => {
-    if (ml || sl || dl) return
-    if (heroItems.length > 0) return
-
-    const items: HeroItem[] = [
-      ...movies.slice(0, 4).filter(m => !!m.posterUrl).map(m => ({
-        id: m.id,
-        title: m.title,
-        posterUrl: m.posterUrl,
-        type: 'movie' as const,
-        linkTo: `/movies/${m.id}`,
-      })),
-      ...series.slice(0, 3).filter(s => !!s.posterUrl).map(s => ({
-        id: s.id,
-        title: s.title,
-        posterUrl: s.posterUrl,
-        type: 'series' as const,
-        linkTo: `/series/${s.id}`,
-      })),
-      ...docs.slice(0, 2).filter(d => !!d.posterUrl).map(d => ({
-        id: d.id,
-        title: d.title,
-        posterUrl: d.posterUrl,
-        type: 'documentary' as const,
-        linkTo: d.isSeries ? `/series/${d.id}` : `/documentaries/${d.id}`,
-      })),
-    ]
-
-    if (items.length > 0) setHeroItems(items)
-  }, [movies, series, docs, ml, sl, dl, heroItems.length])
+    let cancelled = false
+    Promise.all([
+      movieService.getHero(HERO_COUNTS.movies, HERO_MIN_RATING).catch(() => []),
+      seriesService.getHero(HERO_COUNTS.series, HERO_MIN_RATING).catch(() => []),
+      documentaryService.getHero(HERO_COUNTS.documentaries, HERO_MIN_RATING).catch(() => []),
+    ]).then(([m, s, d]) => {
+      if (cancelled) return
+      const items: HeroItem[] = [
+        ...m.filter(x => !!x.posterUrl).map(x => ({
+          id: x.id,
+          title: x.title,
+          posterUrl: x.posterUrl,
+          rating: x.rating,
+          type: 'movie' as const,
+          linkTo: `/movies/${x.id}`,
+        })),
+        ...s.filter(x => !!x.posterUrl).map(x => ({
+          id: x.id,
+          title: x.title,
+          posterUrl: x.posterUrl,
+          rating: x.rating,
+          type: 'series' as const,
+          linkTo: `/series/${x.id}`,
+        })),
+        ...d.filter(x => !!x.posterUrl).map(x => ({
+          id: x.id,
+          title: x.title,
+          posterUrl: x.posterUrl,
+          rating: x.rating,
+          type: 'documentary' as const,
+          linkTo: x.isSeries ? `/series/${x.id}` : `/documentaries/${x.id}`,
+        })),
+      ]
+      if (items.length > 0) setHeroItems(items)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   // Fase 2: enriquecer con backdrop + overview desde detalle (en segundo plano)
   useEffect(() => {

@@ -72,6 +72,42 @@ public sealed class TmdbGenreResponse
     public List<TmdbGenre> Genres { get; set; } = [];
 }
 
+// --- Certificación de edad por país ---
+
+public sealed class TmdbMovieReleaseDatesResponse
+{
+    [JsonPropertyName("results")]
+    public List<TmdbMovieReleaseDatesCountry> Results { get; set; } = [];
+}
+
+public sealed class TmdbMovieReleaseDatesCountry
+{
+    [JsonPropertyName("iso_3166_1")]
+    public string CountryCode { get; set; } = string.Empty;
+    [JsonPropertyName("release_dates")]
+    public List<TmdbMovieReleaseDate> ReleaseDates { get; set; } = [];
+}
+
+public sealed class TmdbMovieReleaseDate
+{
+    [JsonPropertyName("certification")]
+    public string? Certification { get; set; }
+}
+
+public sealed class TmdbTvContentRatingsResponse
+{
+    [JsonPropertyName("results")]
+    public List<TmdbTvContentRating> Results { get; set; } = [];
+}
+
+public sealed class TmdbTvContentRating
+{
+    [JsonPropertyName("iso_3166_1")]
+    public string CountryCode { get; set; } = string.Empty;
+    [JsonPropertyName("rating")]
+    public string? Rating { get; set; }
+}
+
 public sealed class TmdbEpisode
 {
     [JsonPropertyName("id")]

@@ -14,6 +14,7 @@ public sealed class DocumentaryConfiguration : IEntityTypeConfiguration<Document
         builder.Property(d => d.FilePath).HasMaxLength(1000).IsRequired();
         builder.Property(d => d.PosterUrl).HasMaxLength(500);
         builder.Property(d => d.BackdropUrl).HasMaxLength(500);
+        builder.Property(d => d.AgeRating).HasMaxLength(10);
         builder.HasIndex(d => d.FilePath).IsUnique();
         builder.HasIndex(d => d.TmdbId);
         builder.PrimitiveCollection(d => d.Genres).HasColumnType("nvarchar(max)");

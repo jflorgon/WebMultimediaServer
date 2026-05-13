@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
+import { sendKeepAlive } from '../../services/streaming'
 
 const isTizen = import.meta.env.VITE_TIZEN === 'true'
 
@@ -18,10 +19,14 @@ function formatTime(s: number): string {
 interface VideoPlayerProps {
   src: string
   title: string
+  /** 'hls' (default) usa hls.js; 'direct' asigna directamente video.src para Range. */
+  mode?: 'hls' | 'direct'
+  /** Id del recurso (movie/episode/documentary) para enviar heartbeat HLS. */
+  keepAliveId?: string
   onClose: () => void
 }
 
-export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
+export function VideoPlayer({ src, title, mode = 'hls', keepAliveId, onClose }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState(false)
@@ -45,6 +50,31 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
     const video = videoRef.current
     if (!video) return
 
+    // ---- Direct play: el navegador hace Range sobre el fichero original. ----
+    if (mode === 'direct') {
+      video.src = src
+      const onLoaded = () => {
+        setReady(true)
+        video.play().catch(() => {})
+        if (!isTizen) {
+          try { video.requestFullscreen?.() } catch { /* no-op */ }
+        }
+      }
+      const onErr = () => {
+        console.error('[direct] error cargando fuente directa', video.error)
+        setError(true)
+      }
+      video.addEventListener('loadedmetadata', onLoaded)
+      video.addEventListener('error', onErr)
+      return () => {
+        video.removeEventListener('loadedmetadata', onLoaded)
+        video.removeEventListener('error', onErr)
+        video.removeAttribute('src')
+        video.load()
+      }
+    }
+
+    // ---- HLS ----
     if (Hls.isSupported()) {
       const hls = new Hls({ manifestLoadingTimeOut: 120000, manifestLoadingMaxRetry: 3 })
       hls.loadSource(src)
@@ -77,7 +107,7 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
         }
       })
     }
-  }, [src])
+  }, [src, mode])
 
   // Eventos del <video> para alimentar la UI
   useEffect(() => {
@@ -170,6 +200,16 @@ export function VideoPlayer({ src, title, onClose }: VideoPlayerProps) {
       if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current)
     }
   }, [])
+
+  // Heartbeat: mientras el player esté montado y en modo HLS, avisamos al servidor
+  // cada 30 s para que no mate el FFmpeg por inactividad (pausas, buffering, etc.).
+  // En direct play no hace falta: no hay proceso FFmpeg que mantener vivo.
+  useEffect(() => {
+    if (mode !== 'hls' || !keepAliveId) return
+    sendKeepAlive(keepAliveId)
+    const handle = window.setInterval(() => sendKeepAlive(keepAliveId), 30_000)
+    return () => window.clearInterval(handle)
+  }, [mode, keepAliveId])
 
   const togglePlay = () => {
     const v = videoRef.current

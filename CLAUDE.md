@@ -53,9 +53,21 @@ Backend/
     Domain.Tests
 ```
 
-Stack: .NET 8, C# 12, MediatR, EF Core (SQL Server), FluentValidation, AutoMapper, Scalar (OpenAPI).
+Stack: .NET 9, C# 13, MediatR, EF Core (SQL Server), FluentValidation, AutoMapper, Scalar (OpenAPI).
 
 **Pipeline MediatR:** `LoggingBehavior` → `ValidationBehavior` → Handler. Las `ValidationException` de FluentValidation se capturan en `ExceptionHandlingMiddleware` y se devuelven como `400 ValidationProblemDetails`. Los `KeyNotFoundException` se convierten en `404`.
+
+---
+
+## Streaming — HLS y Direct Play
+
+> Detalles completos (criterios, rollback, diagnóstico) en **[STREAMING.md](STREAMING.md)**.
+
+El frontend pide `/api/streaming/{type}/{id}/source` y el backend decide:
+- **Direct play** si el fichero es H.264 (yuv420p 8-bit) + AAC → se sirve el fichero original con HTTP Range (sin pérdida de calidad, sin FFmpeg).
+- **HLS** en cualquier otro caso → FFmpeg remuxea/transcodifica como antes.
+
+Rollback inmediato: `appsettings.json` → `Streaming:DirectPlayEnabled: false` y reiniciar la API.
 
 ---
 

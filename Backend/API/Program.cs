@@ -30,8 +30,10 @@ builder.Services.AddValidatorsFromAssembly(typeof(AssemblyMarker).Assembly);
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(AssemblyMarker).Assembly);
 
-// Streaming HLS
+// Streaming HLS + direct play
+builder.Services.Configure<StreamingOptions>(builder.Configuration.GetSection("Streaming"));
 builder.Services.AddSingleton<IHlsStreamingService, HlsStreamingService>();
+builder.Services.AddSingleton<IDirectPlayService, DirectPlayService>();
 
 // Scanner
 builder.Services.Configure<ScannerOptions>(builder.Configuration.GetSection("Scanner"));

@@ -12,6 +12,7 @@ public sealed class Series
     public string? Overview { get; set; }
     public List<string> Genres { get; set; } = [];
     public double? Rating { get; set; }
+    public string? AgeRating { get; set; }
     public int Seasons { get; set; }
     public int Episodes { get; set; }
     public int? TmdbId { get; set; }

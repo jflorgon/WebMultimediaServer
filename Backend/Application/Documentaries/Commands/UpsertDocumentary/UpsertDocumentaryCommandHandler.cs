@@ -28,6 +28,7 @@ public sealed class UpsertDocumentaryCommandHandler(IApplicationDbContext db)
                 Overview = request.Overview,
                 Genres = request.Genres,
                 Rating = request.Rating,
+                AgeRating = request.AgeRating,
                 RuntimeMinutes = request.RuntimeMinutes,
                 TmdbId = request.TmdbId,
                 CreatedAt = DateTime.UtcNow,
@@ -49,6 +50,7 @@ public sealed class UpsertDocumentaryCommandHandler(IApplicationDbContext db)
             existing.Overview = request.Overview;
             existing.Genres = request.Genres;
             existing.Rating = request.Rating;
+            existing.AgeRating = request.AgeRating;
             existing.RuntimeMinutes = request.RuntimeMinutes;
             existing.TmdbId = request.TmdbId;
             existing.UpdatedAt = DateTime.UtcNow;

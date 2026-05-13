@@ -17,6 +17,7 @@ export interface Series {
   overview?: string
   genres: string[]
   rating?: number
+  ageRating?: string
   seasons: number
   episodes: number
   tmdbId?: number

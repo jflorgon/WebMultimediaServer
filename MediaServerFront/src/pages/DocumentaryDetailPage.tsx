@@ -5,7 +5,8 @@ import { motion } from 'framer-motion'
 import { useDocumentariesStore } from '../store/useDocumentariesStore'
 import { Spinner } from '../components/ui/Spinner'
 import { formatRuntime, formatRating } from '../utils/formatters'
-import { streamUrl } from '../services/streaming'
+import { useStreamSource } from '../services/useStreamSource'
+import { AgeRatingBadge } from '../components/ui/AgeRatingBadge'
 
 const isTizen = import.meta.env.VITE_TIZEN === 'true'
 
@@ -22,17 +23,19 @@ export function DocumentaryDetailPage() {
 
   useEffect(() => { if (id) fetchById(id) }, [id, fetchById])
 
+  const { source } = useStreamSource('documentaries', selected?.id ?? null, playing)
+
   if (loading) return <Spinner />
   if (!selected) return <p className="text-gray-400">{t('errors.notFound')}</p>
 
-  const streamSrc = streamUrl(`/api/streaming/documentaries/${selected.id}/playlist.m3u8`)
-
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
-      {playing && (
+      {playing && source && (
         <Suspense fallback={null}>
           <VideoPlayer
-            src={streamSrc}
+            src={source.url}
+            mode={source.mode}
+            keepAliveId={selected.id}
             title={selected.title}
             onClose={() => setPlaying(false)}
           />
@@ -130,6 +133,7 @@ export function DocumentaryDetailPage() {
                   {t('detail.runtime')}: <strong className="text-white">{formatRuntime(selected.runtimeMinutes)}</strong>
                 </span>
               )}
+              <AgeRatingBadge ageRating={selected.ageRating} />
             </div>
 
             <button

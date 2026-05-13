@@ -1,6 +1,7 @@
 using Application.Documentaries.Queries.GetDocumentaries;
 using Application.Documentaries.Queries.GetDocumentaryById;
 using Application.Documentaries.Queries.GetDocumentaryGenres;
+using Application.Documentaries.Queries.GetHeroDocumentaries;
 using Contracts.Common;
 using Contracts.Documentaries;
 using Core.Pagination;
@@ -35,6 +36,17 @@ public sealed class DocumentariesController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<IReadOnlyList<string>>> GetGenres(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetDocumentaryGenresQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("hero")]
+    public async Task<ActionResult<IReadOnlyList<DocumentaryListItemDto>>> GetHero(
+        [FromQuery] int count = 2,
+        [FromQuery] double minRating = 6.0,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(new GetHeroDocumentariesQuery(count, minRating), cancellationToken);
+        Response.Headers["Cache-Control"] = "no-store";
         return Ok(result);
     }
 }

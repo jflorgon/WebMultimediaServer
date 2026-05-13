@@ -6,7 +6,8 @@ import { useSeriesStore } from '../store/useSeriesStore'
 import { Spinner } from '../components/ui/Spinner'
 import { formatRating } from '../utils/formatters'
 import { seriesService } from '../services/seriesService'
-import { streamUrl } from '../services/streaming'
+import { useStreamSource } from '../services/useStreamSource'
+import { AgeRatingBadge } from '../components/ui/AgeRatingBadge'
 import type { EpisodeListItem } from '../types/series'
 
 const isTizen = import.meta.env.VITE_TIZEN === 'true'
@@ -31,6 +32,8 @@ export function SeriesDetailPage() {
     seriesService.getEpisodes(id).then(setEpisodes).catch(() => setEpisodes([]))
   }, [id])
 
+  const { source: episodeSource } = useStreamSource('episodes', playingEpisodeId, !!playingEpisodeId)
+
   if (loading) return <Spinner />
   if (!selected) return <p className="text-gray-400">{t('errors.notFound')}</p>
 
@@ -44,10 +47,12 @@ export function SeriesDetailPage() {
 
   return (
     <div style={{ backgroundColor: 'var(--netflix-black)' }}>
-      {playingEpisodeId && (
+      {playingEpisodeId && episodeSource && (
         <Suspense fallback={null}>
           <VideoPlayer
-            src={streamUrl(`/api/streaming/episodes/${playingEpisodeId}/playlist.m3u8`)}
+            src={episodeSource.url}
+            mode={episodeSource.mode}
+            keepAliveId={playingEpisodeId}
             title={episodes.find(e => e.id === playingEpisodeId)?.title ?? ''}
             onClose={() => setPlayingEpisodeId(null)}
           />
@@ -146,6 +151,7 @@ export function SeriesDetailPage() {
               <span>
                 {t('detail.episodes')}: <strong className="text-white">{selected.episodes}</strong>
               </span>
+              <AgeRatingBadge ageRating={selected.ageRating} />
             </div>
 
             {selected.genres.length > 0 && (

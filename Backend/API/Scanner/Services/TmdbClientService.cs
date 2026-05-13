@@ -101,4 +101,56 @@ public sealed class TmdbClientService(HttpClient httpClient, IOptions<TmdbOption
             return null;
         }
     }
+
+    public async Task<string?> GetMovieCertificationAsync(int movieId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.GetFromJsonAsync<TmdbMovieReleaseDatesResponse>(
+                $"/3/movie/{movieId}/release_dates", cancellationToken);
+            await Task.Delay(RequestDelay, cancellationToken);
+            if (response is null) return null;
+
+            // ES primero, US como fallback. Dentro de cada país, primera certificación no vacía.
+            string? PickCertFromCountry(string code) =>
+                response.Results
+                    .FirstOrDefault(r => string.Equals(r.CountryCode, code, StringComparison.OrdinalIgnoreCase))
+                    ?.ReleaseDates
+                    .Select(d => d.Certification)
+                    .FirstOrDefault(c => !string.IsNullOrWhiteSpace(c));
+
+            return PickCertFromCountry("ES") ?? PickCertFromCountry("US");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "TMDB movie certification fetch failed for {MovieId}", movieId);
+            return null;
+        }
+    }
+
+    public async Task<string?> GetTvCertificationAsync(int tvId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await httpClient.GetFromJsonAsync<TmdbTvContentRatingsResponse>(
+                $"/3/tv/{tvId}/content_ratings", cancellationToken);
+            await Task.Delay(RequestDelay, cancellationToken);
+            if (response is null) return null;
+
+            string? PickCertFromCountry(string code) =>
+                response.Results
+                    .FirstOrDefault(r => string.Equals(r.CountryCode, code, StringComparison.OrdinalIgnoreCase))
+                    ?.Rating;
+
+            var es = PickCertFromCountry("ES");
+            if (!string.IsNullOrWhiteSpace(es)) return es;
+            var us = PickCertFromCountry("US");
+            return string.IsNullOrWhiteSpace(us) ? null : us;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "TMDB tv certification fetch failed for {TvId}", tvId);
+            return null;
+        }
+    }
 }

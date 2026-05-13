@@ -1,3 +1,4 @@
+using Application.Movies.Queries.GetHeroMovies;
 using Application.Movies.Queries.GetMovieById;
 using Application.Movies.Queries.GetMovieGenres;
 using Application.Movies.Queries.GetMovies;
@@ -35,6 +36,17 @@ public sealed class MoviesController(IMediator mediator) : ControllerBase
     public async Task<ActionResult<IReadOnlyList<string>>> GetGenres(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetMovieGenresQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("hero")]
+    public async Task<ActionResult<IReadOnlyList<MovieListItemDto>>> GetHero(
+        [FromQuery] int count = 4,
+        [FromQuery] double minRating = 6.0,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(new GetHeroMoviesQuery(count, minRating), cancellationToken);
+        Response.Headers["Cache-Control"] = "no-store";
         return Ok(result);
     }
 }
