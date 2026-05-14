@@ -40,7 +40,22 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         _lastHeartbeat[id] = DateTime.UtcNow;
 
         if (File.Exists(playlistPath))
-            return tempDir;
+        {
+            // Reusamos el playlist sólo si:
+            //  - hay un FFmpeg vivo en esta instancia llenándolo todavía, o
+            //  - el playlist está completo (tiene #EXT-X-ENDLIST al final).
+            // Si no, es un playlist huérfano (típico tras reiniciar la API): el cliente
+            // reproduciría los .ts cacheados, llegaría al último listado, y se quedaría
+            // colgado esperando segmentos que nadie está produciendo. Hay que rearrancar.
+            if (_running.ContainsKey(id) || await IsPlaylistCompleteAsync(playlistPath, ct))
+                return tempDir;
+
+            _logger.LogInformation(
+                "Playlist HLS huérfano detectado para {Id} (sin FFmpeg activo y sin ENDLIST). Limpiando y rearrancando transcodificación.",
+                id);
+            try { Directory.Delete(tempDir, recursive: true); }
+            catch (Exception ex) { _logger.LogWarning(ex, "No se pudo limpiar {TempDir}", tempDir); }
+        }
 
         Directory.CreateDirectory(tempDir);
 
@@ -80,6 +95,29 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
 
     private static string GetTempDir(Guid id) =>
         Path.Combine(Path.GetTempPath(), "mediaserver-hls", id.ToString());
+
+    // Detecta si un playlist HLS está completo (FFmpeg cerró con éxito) buscando el tag
+    // #EXT-X-ENDLIST cerca del final del fichero. Sólo lee los últimos bytes para no
+    // cargar playlists largos enteros en memoria.
+    private static async Task<bool> IsPlaylistCompleteAsync(string playlistPath, CancellationToken ct)
+    {
+        try
+        {
+            await using var fs = new FileStream(
+                playlistPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            if (fs.Length == 0) return false;
+
+            var len = (int)Math.Min(256, fs.Length);
+            fs.Seek(-len, SeekOrigin.End);
+            var buf = new byte[len];
+            var read = await fs.ReadAsync(buf.AsMemory(0, len), ct);
+            return System.Text.Encoding.UTF8.GetString(buf, 0, read).Contains("#EXT-X-ENDLIST");
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     private void RunCleanup(object? state)
     {
@@ -147,9 +185,13 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
         var playlistPath = Path.Combine(tempDir, "playlist.m3u8");
 
         var videoCodec = await DetectVideoCodecAsync(filePath);
+        // preset=veryfast: ~3× más rápido que `fast` en Q6850 (4 cores, sin AES-NI/AVX),
+        // mejor paralelización entre cores, calidad casi idéntica al mismo CRF.
+        // Necesario porque con `fast` el ratio caía a ~0.88x tiempo real y el player
+        // alcanzaba la live edge causando paradas.
         var videoArgs = videoCodec == "h264"
             ? "-c:v copy"
-            : "-c:v libx264 -preset fast -crf 22";
+            : "-c:v libx264 -preset veryfast -crf 22";
 
         _logger.LogInformation("Codec detectado para {Id}: {Codec} → {Args}", id, videoCodec, videoArgs);
 
@@ -159,10 +201,14 @@ public sealed class HlsStreamingService : IHlsStreamingService, IDisposable
             {
                 FileName = "ffmpeg",
                 // +igndts: ignora DTS corruptos del AVI; -ac 2: fuerza estéreo (AVI 5.1 causa bufferAppendError en HLS.js)
-                // Audio: 256k AAC LC + normalización de loudness EBU R128 para evitar el efecto "radio"
+                // Audio: 256k AAC LC sin filtro de loudness. Pasamos solo por aresample para
+                // corregir desync de audio. Antes probamos loudnorm (EBU R128 → bottleneck a
+                // 0.65× tiempo real) y dynaudnorm (más rápido pero sonaba "hueco" por la
+                // compresión dinámica). Preferimos respetar la dinámica original; si una peli
+                // suena floja, se sube el volumen del TV.
                 Arguments = $"-fflags +genpts+igndts -avoid_negative_ts make_zero -i \"{filePath}\" " +
                             $"{videoArgs} -c:a aac -profile:a aac_low -ac 2 -ar 48000 -b:a 256k " +
-                            $"-af aresample=async=1000,loudnorm=I=-16:TP=-1.5:LRA=11 " +
+                            $"-af aresample=async=1000 " +
                             $"-max_muxing_queue_size 9999 " +
                             $"-hls_time 6 -hls_list_size 0 " +
                             $"-hls_segment_filename \"{segmentPattern}\" -f hls \"{playlistPath}\"",
