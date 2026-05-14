@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MediaServer</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_movies">Movies</string>
+    <string name="nav_series">Series</string>
+    <string name="nav_documentaries">Documentaries</string>
+    <string name="nav_search">Search</string>
+
+    <string name="home_recent_movies">Recent Movies</string>
+    <string name="home_recent_series">Recent Series</string>
+    <string name="home_recent_documentaries">Recent Documentaries</string>
+    <string name="home_view_all">View all</string>
+    <string name="home_no_content">No content</string>
+
+    <string name="detail_rating">Rating</string>
+    <string name="detail_runtime">Runtime</string>
+    <string name="detail_year">Year</string>
+    <string name="detail_seasons">Seasons</string>
+    <string name="detail_episodes">Episodes</string>
+    <string name="detail_play">Play</string>
+    <string name="detail_back">Back</string>
+    <string name="detail_season_short">S%1$d</string>
+    <string name="detail_episode_short">%1$dx%2$02d</string>
+
+    <string name="search_placeholder">Search…</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_filters">Filters</string>
+
+    <string name="player_loading">Preparing stream…</string>
+    <string name="player_error">Could not load the video</string>
+    <string name="player_resume_title">Resume playback?</string>
+    <string name="player_resume_continue">Continue from %1$s</string>
+    <string name="player_resume_restart">Start from the beginning</string>
+    <string name="player_hint">◀ ▶ ±10s · ▲ ▼ ±60s · OK pause · BACK exit</string>
+
+    <string name="error_network">Could not reach the server</string>
+    <string name="error_retry">Retry</string>
+    <string name="not_found">Not found</string>
+
+    <string name="generic_loading">Loading…</string>
+    <string name="generic_minutes_short">min</string>
+    <string name="generic_hour_short">h</string>
+    <string name="generic_titles_count">%1$d titles</string>
+</resources>

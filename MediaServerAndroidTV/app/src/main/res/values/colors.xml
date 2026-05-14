@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta Netflix (espejo de MediaServerFront/src/index.css :root) -->
+    <color name="netflix_red">#FFE50914</color>
+    <color name="netflix_red_dark">#FFB20710</color>
+    <color name="netflix_black">#FF141414</color>
+    <color name="netflix_dark">#FF1A1A1A</color>
+    <color name="netflix_gray">#FF2A2A2A</color>
+    <color name="netflix_text">#FFE5E5E5</color>
+    <color name="rating_yellow">#FFFACC15</color>
+    <color name="year_green">#FF4ADE80</color>
+</resources>

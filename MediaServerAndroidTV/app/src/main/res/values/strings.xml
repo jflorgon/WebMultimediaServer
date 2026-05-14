@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MediaServer</string>
+
+    <!-- nav -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_movies">Películas</string>
+    <string name="nav_series">Series</string>
+    <string name="nav_documentaries">Documentales</string>
+    <string name="nav_search">Buscar</string>
+
+    <!-- home -->
+    <string name="home_recent_movies">Películas recientes</string>
+    <string name="home_recent_series">Series recientes</string>
+    <string name="home_recent_documentaries">Documentales recientes</string>
+    <string name="home_view_all">Ver todo</string>
+    <string name="home_no_content">Sin contenido</string>
+
+    <!-- detail -->
+    <string name="detail_rating">Puntuación</string>
+    <string name="detail_runtime">Duración</string>
+    <string name="detail_year">Año</string>
+    <string name="detail_seasons">Temporadas</string>
+    <string name="detail_episodes">Episodios</string>
+    <string name="detail_play">Reproducir</string>
+    <string name="detail_back">Volver</string>
+    <string name="detail_season_short">T%1$d</string>
+    <string name="detail_episode_short">%1$dx%2$02d</string>
+
+    <!-- search -->
+    <string name="search_placeholder">Buscar…</string>
+    <string name="search_no_results">Sin resultados</string>
+    <string name="search_filters">Filtros</string>
+
+    <!-- player -->
+    <string name="player_loading">Preparando stream…</string>
+    <string name="player_error">Error al cargar el vídeo</string>
+    <string name="player_resume_title">¿Continuar viendo?</string>
+    <string name="player_resume_continue">Continuar desde %1$s</string>
+    <string name="player_resume_restart">Empezar desde el inicio</string>
+    <string name="player_hint">◀ ▶ ±10s · ▲ ▼ ±60s · OK pausa · BACK salir</string>
+
+    <!-- errors -->
+    <string name="error_network">No se ha podido contactar con el servidor</string>
+    <string name="error_retry">Reintentar</string>
+    <string name="not_found">No encontrado</string>
+
+    <!-- generic -->
+    <string name="generic_loading">Cargando…</string>
+    <string name="generic_minutes_short">min</string>
+    <string name="generic_hour_short">h</string>
+    <string name="generic_titles_count">%1$d títulos</string>
+</resources>
